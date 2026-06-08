@@ -17,17 +17,18 @@
             panelbg: '#1E293B',
             accent: '#10B981', // Neon green
             accentSoft: 'rgba(16, 185, 129, 0.1)',
-            coral: '#F59E0B', // Warning state color
+            warningColor: '#EF4444', // Red accent
+            gold: '#F59E0B' // Gold accent
           }
         }
       }
     }
   </script>
 
-  <!-- Google Fonts for futuristic look -->
+  <!-- Google Fonts for digital and sleek tech styling -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght=400;700;900&family=Plus+Jakarta+Sans:wght=300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800;900&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 
   <!-- MediaPipe Pose Requirements -->
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
@@ -41,7 +42,7 @@
     .digital-font {
       font-family: 'Orbitron', sans-serif;
     }
-    /* Animated active radar element for camera indicator */
+    /* Animated active radar elements */
     @keyframes pulse-slow {
       0%, 100% { opacity: 1; transform: scale(1); }
       50% { opacity: 0.4; transform: scale(1.1); }
@@ -49,7 +50,6 @@
     .live-pulse {
       animation: pulse-slow 2s infinite ease-in-out;
     }
-    /* Smooth custom scrollbars */
     ::-webkit-scrollbar {
       width: 6px;
     }
@@ -64,11 +64,10 @@
 </head>
 <body class="bg-darkbg text-slate-100 min-h-screen flex flex-col overflow-x-hidden">
 
-  <!-- TOP BAR -->
+  <!-- TOP BRAND HEADER -->
   <header class="border-b border-slate-800 bg-slate-900/80 backdrop-blur sticky top-0 z-40 px-4 py-3 flex items-center justify-between">
     <div class="flex items-center space-x-3">
       <div class="bg-accent p-2 rounded-xl text-darkbg shadow-lg shadow-accent/20">
-        <!-- Dumbbell Icon -->
         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M3.75 9h16.5m-16.5 6h16.5M12 3v18M6.75 3v18m10.5-18v18M3 12h18" />
         </svg>
@@ -77,293 +76,414 @@
         <h1 class="text-lg font-bold tracking-tight text-white flex items-center">
           RepTracker <span class="text-accent ml-1 font-extrabold text-xs bg-accentSoft px-1.5 py-0.5 rounded border border-accent/20">AI</span>
         </h1>
-        <p class="text-[10px] text-slate-400">Computer Vision Rep Counter</p>
+        <p class="text-[10px] text-slate-400">Computer Vision Posture Auditor</p>
       </div>
     </div>
 
     <!-- Active Indicator -->
     <div id="cameraStatusIndicator" class="flex items-center space-x-2 text-xs bg-slate-800 px-3 py-1.5 rounded-full border border-slate-700">
       <div class="w-2.5 h-2.5 rounded-full bg-slate-500" id="statusDot"></div>
-      <span class="text-slate-300 text-[11px]" id="statusText">System Ready</span>
+      <span class="text-slate-300 text-[11px]" id="statusText">System Idle</span>
     </div>
   </header>
 
-  <!-- MAIN CONTAINER (SPLIT ON WIDE SCREENS, STACKED ON MOBILE) -->
-  <main class="flex-grow max-w-7xl w-full mx-auto p-4 lg:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
-    
-    <!-- LEFT COLUMN: CAMERA ENGINE & SKELETON (COL-SPAN-7) -->
-    <section class="lg:col-span-7 flex flex-col space-y-4">
-      
-      <!-- Screen/Camera Container -->
-      <div class="relative bg-panelbg rounded-3xl overflow-hidden border border-slate-800 shadow-2xl shadow-black/40 aspect-[4/3] flex items-center justify-center">
-        <!-- Live Camera Feed (Hidden, utilized as source) -->
-        <video id="webcam" class="hidden" autoplay playsinline></video>
-        
-        <!-- Output Canvas -->
-        <canvas id="poseCanvas" class="w-full h-full object-cover scale-x-[-1]"></canvas>
+  <!-- MAIN VIEW CONTAINER -->
+  <main class="flex-grow max-w-5xl w-full mx-auto p-4 lg:p-6 flex flex-col justify-center">
 
-        <!-- Loading / Overlay Screens -->
-        <div id="onboardingScreen" class="absolute inset-0 bg-slate-900/95 flex flex-col items-center justify-center text-center p-6 transition-all duration-300">
-          <div class="w-20 h-20 bg-accentSoft border border-accent/30 rounded-full flex items-center justify-center text-accent mb-4 live-pulse">
-            <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></svg>
-          </div>
-          <h2 class="text-2xl font-bold text-white mb-2">Initialize Camera</h2>
-          <p class="text-sm text-slate-400 max-w-sm mb-6 leading-relaxed">
-            Please allow access to your camera. Position your device to fit your entire body in the frame.
-          </p>
-          <button id="btnStartCamera" class="px-6 py-3 bg-accent hover:bg-emerald-400 text-darkbg font-bold rounded-xl shadow-lg shadow-accent/20 transition-all transform hover:scale-[1.03]">
-            Enable Live Tracking
-          </button>
+    <!-- ==================== PART 1: SETUP/WELCOME SCREEN ==================== -->
+    <section id="setupView" class="block bg-panelbg border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl max-w-xl mx-auto w-full transition-all duration-300">
+      <div class="text-center mb-6">
+        <div class="inline-block bg-accentSoft border border-accent/30 text-accent px-3 py-1 rounded-full text-xs font-semibold mb-2">
+          v2.5 High Fidelity Vision Engine
         </div>
-
-        <!-- Feedback Messages Overlay -->
-        <div id="aiBanner" class="absolute top-4 left-4 right-4 bg-slate-900/90 border border-slate-700/80 px-4 py-2.5 rounded-2xl flex items-center justify-between text-xs backdrop-blur transition-all duration-300 opacity-0 transform -translate-y-2 pointer-events-none">
-          <div class="flex items-center space-x-2">
-            <span class="flex h-2.5 w-2.5 relative">
-              <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent opacity-75"></span>
-              <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-accent"></span>
-            </span>
-            <span id="aiBannerText" class="font-medium text-slate-200">Checking posture...</span>
-          </div>
-          <span id="aiBannerAngle" class="font-mono text-accent">--</span>
-        </div>
-
-        <!-- Loading Model State -->
-        <div id="modelLoadingSpinner" class="hidden absolute inset-0 bg-slate-900/90 flex flex-col items-center justify-center">
-          <div class="relative w-16 h-16 mb-4">
-            <div class="absolute inset-0 rounded-full border-4 border-slate-800"></div>
-            <div class="absolute inset-0 rounded-full border-4 border-t-accent animate-spin"></div>
-          </div>
-          <p class="text-sm font-semibold tracking-wider text-slate-300">LOADING AI VISION MODEL...</p>
-          <p class="text-xs text-slate-500 mt-1">This may take up to 10 seconds first time.</p>
-        </div>
+        <h2 class="text-2xl sm:text-3xl font-black text-white tracking-tight">Set Your Targets</h2>
+        <p class="text-xs sm:text-sm text-slate-400 mt-1">Configure your performance metrics before activating live tracking.</p>
       </div>
 
-      <!-- Control Center Widget -->
-      <div class="bg-panelbg border border-slate-800 p-4 rounded-3xl flex flex-col sm:flex-row items-center justify-between gap-4">
-        <div class="w-full sm:w-auto">
-          <label class="text-[10px] uppercase tracking-wider text-slate-400 block mb-1.5 font-bold">Exercise Target</label>
-          <div class="grid grid-cols-4 gap-1 p-1 bg-slate-900 rounded-2xl border border-slate-800">
-            <button onclick="setExercise('push-up')" id="ex-push-up" class="ex-tab px-3 py-2 text-xs font-semibold rounded-xl text-center transition-all bg-accent text-darkbg shadow-sm">
-              Push-up
+      <!-- Exercise Selector Grid -->
+      <div class="space-y-4">
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">1. Select Exercise</label>
+          <div class="grid grid-cols-2 gap-3">
+            <button onclick="selectSetupExercise('push-up')" id="setup-ex-push-up" class="setup-ex-btn border-2 border-accent bg-accentSoft text-white p-4 rounded-2xl text-left transition-all relative flex flex-col justify-between h-24">
+              <span class="text-xs font-bold uppercase text-accent">Push-up</span>
+              <span class="text-[10px] text-slate-400">Back & Chest</span>
             </button>
-            <button onclick="setExercise('squat')" id="ex-squat" class="ex-tab px-3 py-2 text-xs font-semibold rounded-xl text-center text-slate-400 hover:text-white transition-all">
-              Squat
+            <button onclick="selectSetupExercise('squat')" id="setup-ex-squat" class="setup-ex-btn border-2 border-slate-800 hover:border-slate-700 bg-slate-900/50 text-slate-300 p-4 rounded-2xl text-left transition-all relative flex flex-col justify-between h-24">
+              <span class="text-xs font-bold uppercase">Squat</span>
+              <span class="text-[10px] text-slate-400">Quads & Glutes</span>
             </button>
-            <button onclick="setExercise('pull-up')" id="ex-pull-up" class="ex-tab px-3 py-2 text-xs font-semibold rounded-xl text-center text-slate-400 hover:text-white transition-all">
-              Pull-up
+            <button onclick="selectSetupExercise('pull-up')" id="setup-ex-pull-up" class="setup-ex-btn border-2 border-slate-800 hover:border-slate-700 bg-slate-900/50 text-slate-300 p-4 rounded-2xl text-left transition-all relative flex flex-col justify-between h-24">
+              <span class="text-xs font-bold uppercase">Pull-up</span>
+              <span class="text-[10px] text-slate-400">Upper Back</span>
             </button>
-            <button onclick="setExercise('sit-up')" id="ex-sit-up" class="ex-tab px-3 py-2 text-xs font-semibold rounded-xl text-center text-slate-400 hover:text-white transition-all">
-              Sit-up
+            <button onclick="selectSetupExercise('sit-up')" id="setup-ex-sit-up" class="setup-ex-btn border-2 border-slate-800 hover:border-slate-700 bg-slate-900/50 text-slate-300 p-4 rounded-2xl text-left transition-all relative flex flex-col justify-between h-24">
+              <span class="text-xs font-bold uppercase">Sit-up</span>
+              <span class="text-[10px] text-slate-400">Core Abdomen</span>
             </button>
           </div>
         </div>
 
-        <div class="flex items-center space-x-3 w-full sm:w-auto justify-end">
-          <button id="btnToggleWorkout" disabled class="flex-grow sm:flex-none px-6 py-3 bg-slate-800 text-slate-400 font-bold rounded-xl border border-slate-700/50 cursor-not-allowed transition-all flex items-center justify-center space-x-2">
-            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"></path></svg>
-            <span>Start Session</span>
-          </button>
-          <button id="btnResetSession" class="px-3 py-3 bg-slate-900 border border-slate-800 hover:bg-slate-800 rounded-xl transition-all" title="Reset Counter">
-            <svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.213 15M20.354 9a1.001 1.001 0 00-.597-.935L17.5 7"></path>
-            </svg>
-          </button>
-        </div>
-      </div>
-    </section>
-
-    <!-- RIGHT COLUMN: DASHBOARD STATS & WORKOUT HISTORY -->
-    <section class="lg:col-span-5 flex flex-col space-y-6">
-      
-      <!-- BIG COUNT WIDGET -->
-      <div class="relative bg-gradient-to-br from-panelbg to-slate-900 border border-slate-800 rounded-3xl p-6 shadow-xl flex flex-col justify-between overflow-hidden">
-        <!-- Floating Ambient Background Light -->
-        <div class="absolute -right-16 -top-16 w-40 h-40 bg-accent/10 rounded-full blur-3xl"></div>
-        
-        <div class="flex justify-between items-start z-10">
+        <!-- Target Parameters Setup -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
           <div>
-            <h3 id="currentExerciseTitle" class="text-white text-xl font-bold tracking-tight">Push-ups Mode</h3>
-            <p class="text-xs text-slate-400">Perform reps smoothly and in full range</p>
+            <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5 flex justify-between">
+              <span>Target Repetitions</span>
+              <span id="targetRepsVal" class="text-accent font-mono">10 reps</span>
+            </label>
+            <input type="range" id="targetRepsInput" min="5" max="100" step="5" value="10" oninput="updateTargetLabels()" class="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-accent">
+            <div class="flex justify-between text-[10px] text-slate-500 font-semibold mt-1">
+              <span>5 Reps</span>
+              <span>100 Reps</span>
+            </div>
           </div>
-          <span id="activeBadge" class="hidden bg-accentSoft text-accent text-[10px] font-bold px-2 py-1 rounded-full border border-accent/20 tracking-wider uppercase animate-pulse">
-            Active Counter
-          </span>
+
+          <div>
+            <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5 flex justify-between">
+              <span>Target Time Limit</span>
+              <span id="targetTimeVal" class="text-accent font-mono">30s</span>
+            </label>
+            <input type="range" id="targetTimeInput" min="15" max="300" step="15" value="30" oninput="updateTargetLabels()" class="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-accent">
+            <div class="flex justify-between text-[10px] text-slate-500 font-semibold mt-1">
+              <span>15 Seconds</span>
+              <span>5 Minutes</span>
+            </div>
+          </div>
         </div>
 
-        <!-- Big Digital Counter -->
-        <div class="my-6 py-2 text-center relative z-10">
-          <div id="counterPulseBox" class="transition-all duration-150 transform scale-100 flex flex-col items-center justify-center">
-            <span id="repCounterDisplay" class="digital-font text-8xl md:text-9xl font-black text-white select-none drop-shadow-[0_0_15px_rgba(16,185,129,0.3)]">00</span>
-            <span class="text-xs tracking-[0.4em] uppercase text-accent font-bold mt-2">REPETITIONS</span>
+        <!-- Notification notes explaining form check conditions -->
+        <div class="bg-slate-900/80 rounded-2xl p-3.5 border border-slate-800/80 flex items-start space-x-3 text-xs text-slate-400 mt-2">
+          <div class="bg-accent/10 text-accent p-1.5 rounded-lg mt-0.5">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <div class="leading-relaxed">
+            <strong class="text-white">Strict Form Enforcement:</strong> Repetitions will <strong class="text-accent">only count</strong> if the AI vision evaluator scores your form at <strong class="text-white">75% or higher</strong>. Ensure you perform a full range of motion.
           </div>
         </div>
 
-        <!-- Visual Progress Gauge Bar -->
-        <div class="w-full bg-slate-800 rounded-full h-2 mb-2 overflow-hidden z-10">
-          <div id="exerciseStateGauge" class="bg-accent h-full w-0 transition-all duration-100"></div>
-        </div>
-        <div class="flex justify-between text-[10px] text-slate-500 font-bold tracking-wider z-10">
-          <span>REST / OUT OF BOUNDS</span>
-          <span id="rawPositionText" class="text-slate-400">PREPARING FORM</span>
-        </div>
-      </div>
-
-      <!-- METRIC CHIPS GRID -->
-      <div class="grid grid-cols-3 gap-3">
-        <!-- Duration Widget -->
-        <div class="bg-panelbg border border-slate-800 p-3 rounded-2xl flex flex-col justify-center">
-          <div class="flex items-center space-x-1.5 text-slate-400 mb-1">
-            <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-            <span class="text-[10px] uppercase tracking-wider font-bold">Timer</span>
-          </div>
-          <span id="timerDisplay" class="digital-font text-lg font-bold text-slate-100">00:00</span>
-        </div>
-
-        <!-- Calories Widget -->
-        <div class="bg-panelbg border border-slate-800 p-3 rounded-2xl flex flex-col justify-center">
-          <div class="flex items-center space-x-1.5 text-slate-400 mb-1">
-            <svg class="w-3.5 h-3.5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z"></path></svg>
-            <span class="text-[10px] uppercase tracking-wider font-bold">Calories</span>
-          </div>
-          <span id="caloriesDisplay" class="digital-font text-lg font-bold text-slate-100">0.0 <span class="text-[10px] text-slate-400">kcal</span></span>
-        </div>
-
-        <!-- Form Accuracy Widget -->
-        <div class="bg-panelbg border border-slate-800 p-3 rounded-2xl flex flex-col justify-center">
-          <div class="flex items-center space-x-1.5 text-slate-400 mb-1">
-            <svg class="w-3.5 h-3.5 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"></path></svg>
-            <span class="text-[10px] uppercase tracking-wider font-bold">Accuracy</span>
-          </div>
-          <span id="accuracyDisplay" class="digital-font text-lg font-bold text-slate-100">95%</span>
-        </div>
-      </div>
-
-      <!-- WORKOUT JOURNAL & SUMMARY -->
-      <div class="bg-panelbg border border-slate-800 rounded-3xl p-5 flex flex-col flex-grow">
-        <div class="flex items-center justify-between mb-4 border-b border-slate-800/80 pb-3">
-          <div class="flex items-center space-x-2">
-            <svg class="w-5 h-5 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
-            <h4 class="font-bold text-sm tracking-tight text-white">Workout History Log</h4>
-          </div>
-          <button id="btnClearHistory" class="text-[11px] text-slate-400 hover:text-rose-400 transition-colors">Clear All</button>
-        </div>
-
-        <!-- History Items Area -->
-        <div id="historyListContainer" class="space-y-2 max-h-[220px] overflow-y-auto pr-1">
-          <!-- Empty State -->
-          <div id="historyEmptyState" class="text-center py-8">
-            <svg class="w-8 h-8 text-slate-600 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0a2 2 0 01-2 2H6a2 2 0 01-2-2m16 0V9a2 2 0 00-2-2H6a2 2 0 00-2 2v4.586a1 1 0 01-.293.707l-2 2A1 1 0 003 18h18a1 1 0 00.707-1.707l-2-2z"></path></svg>
-            <p class="text-xs text-slate-500 font-medium">No recorded workout logs yet.</p>
-          </div>
-          <!-- Populated items will render here dynamically -->
-        </div>
+        <!-- Launch Button -->
+        <button id="btnLaunchWorkout" class="w-full mt-2 py-4 bg-accent hover:bg-emerald-400 text-darkbg font-black text-sm uppercase tracking-widest rounded-2xl shadow-xl shadow-accent/10 transition-all active:scale-[0.98]">
+          Initialize Live Vision Tracker
+        </button>
       </div>
     </section>
+
+    <!-- ==================== PART 2: ACTIVE WORKOUT HUD SCREEN ==================== -->
+    <section id="workoutView" class="hidden grid grid-cols-1 lg:grid-cols-12 gap-6 w-full max-w-6xl mx-auto transition-all duration-300">
+      
+      <!-- Left side: Camera feed viewport -->
+      <div class="lg:col-span-7 flex flex-col space-y-4">
+        <div class="relative bg-panelbg rounded-3xl overflow-hidden border border-slate-800 shadow-2xl aspect-[3/4] sm:aspect-[4/3] max-h-[60vh] sm:max-h-[500px] flex items-center justify-center">
+          
+          <!-- Invisible source element -->
+          <video id="webcam" class="hidden" autoplay playsinline></video>
+          
+          <!-- Main rendering surface -->
+          <canvas id="poseCanvas" class="w-full h-full object-cover scale-x-[-1]"></canvas>
+
+          <!-- Banner overlay for immediate AI metrics and feedback warnings -->
+          <div id="aiBanner" class="absolute top-3 left-3 right-3 bg-slate-900/95 border border-slate-700/80 px-4 py-3 rounded-2xl flex items-center justify-between text-xs backdrop-blur transition-all duration-300 opacity-0 transform -translate-y-2 pointer-events-none z-20">
+            <div class="flex items-center space-x-2.5">
+              <span class="flex h-2.5 w-2.5 relative">
+                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent opacity-75"></span>
+                <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-accent"></span>
+              </span>
+              <span id="aiBannerText" class="font-bold text-slate-100">Analyzing body position...</span>
+            </div>
+            <span id="aiBannerAngle" class="font-mono text-accent font-black text-sm">--</span>
+          </div>
+
+          <!-- Invalid Rep Warning Flash Frame (Red outline alert overlay) -->
+          <div id="formWarningAlert" class="absolute inset-0 border-8 border-rose-600/0 pointer-events-none transition-all duration-150 z-10 rounded-3xl"></div>
+
+          <!-- Initialization/Calibration Spinner -->
+          <div id="modelLoadingSpinner" class="hidden absolute inset-0 bg-slate-950/95 flex flex-col items-center justify-center z-30">
+            <div class="relative w-12 h-12 mb-4">
+              <div class="absolute inset-0 rounded-full border-4 border-slate-800"></div>
+              <div class="absolute inset-0 rounded-full border-4 border-t-accent animate-spin"></div>
+            </div>
+            <p class="text-xs font-extrabold tracking-wider text-slate-300 uppercase">CALIBRATING AI SCANNER...</p>
+            <p class="text-[10px] text-slate-500 mt-1">Readying skeletal orientation nodes</p>
+          </div>
+        </div>
+
+        <!-- Workout control actions -->
+        <div class="bg-panelbg border border-slate-800 p-4 rounded-3xl flex items-center justify-between gap-4">
+          <div class="flex items-center space-x-3">
+            <span class="relative flex h-2.5 w-2.5">
+              <span id="indicatorPulse" class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span id="indicatorDot" class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+            </span>
+            <div class="text-left">
+              <p id="currentPhaseLabel" class="text-xs font-extrabold text-slate-200">STANDBY MODE</p>
+              <p id="liveStatusMetricText" class="text-[10px] font-medium text-slate-400">Position yourself fully in visual frame</p>
+            </div>
+          </div>
+
+          <div class="flex items-center space-x-2">
+            <button id="btnEndWorkoutEarly" class="px-5 py-3 bg-slate-900 border border-slate-800 hover:bg-slate-800/80 hover:border-slate-700/80 text-rose-400 font-extrabold text-xs uppercase tracking-wider rounded-xl transition-all">
+              End Early
+            </button>
+            <button id="btnPlayPause" class="px-6 py-3 bg-accent text-darkbg font-extrabold text-xs uppercase tracking-wider rounded-xl transition-all hover:bg-emerald-400 shadow-md">
+              Pause
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right side: Real-time counter metrics dashboard -->
+      <div class="lg:col-span-5 flex flex-col space-y-6 justify-between">
+        
+        <!-- Big Rep Widget -->
+        <div class="relative bg-gradient-to-br from-panelbg to-slate-900 border border-slate-800 rounded-3xl p-6 shadow-xl flex flex-col justify-between overflow-hidden flex-grow">
+          <div class="absolute -right-16 -top-16 w-40 h-40 bg-accent/10 rounded-full blur-3xl"></div>
+          
+          <div class="flex justify-between items-start z-10">
+            <div>
+              <h3 id="workoutExerciseTitle" class="text-white text-lg font-extrabold tracking-tight">Push-ups Mode</h3>
+              <p id="workoutGoalTrackerText" class="text-[11px] text-slate-400">Goal: 0/10 reps</p>
+            </div>
+            <span id="badFormToast" class="opacity-0 bg-rose-950/80 text-rose-400 text-[10px] font-bold px-2.5 py-1 rounded-full border border-rose-500/30 tracking-wider uppercase transition-opacity duration-300">
+              Incorrect Form
+            </span>
+          </div>
+
+          <!-- Big Counter display -->
+          <div class="my-6 py-1 text-center relative z-10">
+            <div id="counterPulseBox" class="transition-all duration-150 transform scale-100 flex flex-col items-center justify-center">
+              <span id="repCounterDisplay" class="digital-font text-8xl md:text-9xl font-black text-white select-none drop-shadow-[0_0_15px_rgba(16,185,129,0.25)]">00</span>
+              <span class="text-xs tracking-[0.4em] uppercase text-accent font-bold mt-2">VALID REPS</span>
+            </div>
+          </div>
+
+          <!-- Progress Indicator Bar -->
+          <div class="w-full bg-slate-800 rounded-full h-2.5 mb-2 overflow-hidden z-10">
+            <div id="exerciseStateGauge" class="bg-accent h-full w-0 transition-all duration-100"></div>
+          </div>
+          <div class="flex justify-between text-[10px] text-slate-500 font-bold tracking-wider z-10">
+            <span>REST/UPRIGHT</span>
+            <span id="rawPositionText" class="text-slate-400">ALIGNING POSE SKELETON</span>
+          </div>
+        </div>
+
+        <!-- Metrics Grid -->
+        <div class="grid grid-cols-3 gap-3">
+          <!-- Live Timer Display -->
+          <div id="timerCard" class="bg-panelbg border border-slate-800 p-3.5 rounded-2xl flex flex-col justify-center transition-all duration-300">
+            <div class="flex items-center space-x-1.5 text-slate-400 mb-1">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span class="text-[10px] uppercase tracking-wider font-bold">Elapsed</span>
+            </div>
+            <span id="workoutTimerDisplay" class="digital-font text-lg font-bold text-slate-100">00:00</span>
+          </div>
+
+          <!-- Real-Time Form Accuracy -->
+          <div class="bg-panelbg border border-slate-800 p-3.5 rounded-2xl flex flex-col justify-center">
+            <div class="flex items-center space-x-1.5 text-slate-400 mb-1">
+              <svg class="w-3.5 h-3.5 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4" />
+              </svg>
+              <span class="text-[10px] uppercase tracking-wider font-bold">Live Form</span>
+            </div>
+            <span id="workoutAccuracyDisplay" class="digital-font text-lg font-bold text-slate-100">--</span>
+          </div>
+
+          <!-- Live Energy expenditure -->
+          <div class="bg-panelbg border border-slate-800 p-3.5 rounded-2xl flex flex-col justify-center">
+            <div class="flex items-center space-x-1.5 text-slate-400 mb-1">
+              <svg class="w-3.5 h-3.5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z" />
+              </svg>
+              <span class="text-[10px] uppercase tracking-wider font-bold">Energy</span>
+            </div>
+            <span id="workoutCaloriesDisplay" class="digital-font text-lg font-bold text-slate-100">0.0 <span class="text-[9px] text-slate-500">kcal</span></span>
+          </div>
+        </div>
+
+        <!-- Info/Instructions Card -->
+        <div class="bg-slate-900 border border-slate-800 rounded-3xl p-4 flex items-center space-x-3.5">
+          <div class="bg-emerald-500/10 text-accent p-2 rounded-xl">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122" />
+            </svg>
+          </div>
+          <div class="text-xs">
+            <h4 class="font-bold text-slate-200">Interactive Vocal Alerts</h4>
+            <p class="text-slate-500 leading-relaxed">System will give speech cues if you exit frame bounds or pull out of visibility zones.</p>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ==================== PART 3: DETAILED SUMMARY & PERFORMANCE CRITIQUE SCREEN ==================== -->
+    <section id="summaryView" class="hidden max-w-2xl mx-auto w-full space-y-6 transition-all duration-300">
+      
+      <!-- Trophy Card Header -->
+      <div class="bg-gradient-to-br from-panelbg to-slate-900 border border-slate-800 rounded-3xl p-6 text-center relative overflow-hidden shadow-2xl">
+        <div class="absolute -left-10 -top-10 w-32 h-32 bg-accent/5 rounded-full blur-3xl"></div>
+        
+        <div id="summaryHeroIcon" class="w-16 h-16 bg-accentSoft border border-accent/20 rounded-full flex items-center justify-center text-accent mx-auto mb-4">
+          <!-- Dynamic checkmark or trophy based on success will go here -->
+          <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
+          </svg>
+        </div>
+
+        <h2 id="summaryHeadline" class="text-2xl font-black text-white tracking-tight">Workout Completed!</h2>
+        <p id="summarySubheadline" class="text-xs text-slate-400 mt-1">Excellent dedication. Here is your biometric feedback.</p>
+      </div>
+
+      <!-- Core Stat Breakdown Card -->
+      <div class="bg-panelbg border border-slate-800 rounded-3xl p-6 space-y-6 shadow-xl">
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center divide-y sm:divide-y-0 sm:divide-x divide-slate-800/80">
+          
+          <div class="pt-3 sm:pt-0">
+            <span class="block text-[10px] uppercase tracking-wider text-slate-400 font-extrabold">Final Reps</span>
+            <span id="sumTotalReps" class="digital-font text-2xl font-bold text-white block mt-1">--</span>
+            <span id="sumTargetGoal" class="text-[9px] text-slate-500 block">Target: --</span>
+          </div>
+
+          <div class="pt-3 sm:pt-0">
+            <span class="block text-[10px] uppercase tracking-wider text-slate-400 font-extrabold">Time Taken</span>
+            <span id="sumTimeTaken" class="digital-font text-2xl font-bold text-white block mt-1">--</span>
+            <span id="sumExtraTime" class="text-[9px] text-slate-400 block font-mono">Extra: --</span>
+          </div>
+
+          <div class="pt-3 sm:pt-0">
+            <span class="block text-[10px] uppercase tracking-wider text-slate-400 font-extrabold">Average Form</span>
+            <span id="sumAvgForm" class="digital-font text-2xl font-bold text-white block mt-1">--</span>
+            <span id="sumRejectedReps" class="text-[9px] text-rose-500 block">-- rejected</span>
+          </div>
+
+          <div class="pt-3 sm:pt-0">
+            <span class="block text-[10px] uppercase tracking-wider text-slate-400 font-extrabold">Energy Spent</span>
+            <span id="sumTotalCalories" class="digital-font text-2xl font-bold text-amber-500 block mt-1">--</span>
+            <span class="text-[9px] text-slate-500 block">Estimated kcal</span>
+          </div>
+
+        </div>
+
+        <!-- In-Depth Biometric Posture Evaluation Report -->
+        <div class="border-t border-slate-800/80 pt-4 space-y-3">
+          <h4 class="text-xs font-extrabold uppercase tracking-widest text-slate-400">Post-Workout Posture Assessment</h4>
+          
+          <div id="critiqueBox" class="bg-slate-900 border border-slate-800 rounded-2xl p-4 text-xs text-slate-300 leading-relaxed space-y-2">
+            <!-- Dynamically populated analysis text based on accuracy breakdown goes here -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Control / Restart Actions -->
+      <div class="flex items-center space-x-3">
+        <button onclick="transitionToSetup()" class="flex-grow py-4 bg-accent hover:bg-emerald-400 text-darkbg font-bold text-xs uppercase tracking-widest rounded-2xl shadow-lg shadow-accent/10 transition-all">
+          Prepare New Workout Session
+        </button>
+      </div>
+
+    </section>
+
   </main>
 
-  <!-- CUSTOM FEEDBACK ALERTS DIALOG (NO NATIVE BROWSER ALERTS) -->
-  <div id="alertModal" class="hidden fixed inset-0 bg-black/75 flex items-center justify-center p-4 z-50 transition-opacity duration-300">
-    <div class="bg-slate-900 border border-slate-800 rounded-3xl max-w-sm w-full p-6 text-center transform transition-transform duration-300 scale-95">
-      <div class="w-14 h-14 bg-rose-500/10 border border-rose-500/20 text-rose-500 rounded-full flex items-center justify-center mx-auto mb-4">
-        <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+  <!-- ==================== DIALOG MODALS & OVERLAYS ==================== -->
+
+  <!-- EARLY TERMINATION CONFIRMATION DIALOG -->
+  <div id="confirmEndModal" class="hidden fixed inset-0 bg-black/85 items-center justify-center p-4 z-50 transition-all">
+    <div class="bg-slate-900 border border-slate-800 rounded-3xl max-w-sm w-full p-6 text-center shadow-2xl">
+      <div class="w-14 h-14 bg-amber-500/10 border border-amber-500/20 text-amber-500 rounded-full flex items-center justify-center mx-auto mb-4">
+        <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+        </svg>
       </div>
-      <h3 id="alertTitle" class="text-white text-lg font-bold mb-2">Notice</h3>
-      <p id="alertMessage" class="text-xs text-slate-400 mb-6 leading-relaxed">Explanation or error goes here.</p>
-      <button onclick="dismissAlert()" class="w-full py-3 bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold rounded-xl border border-slate-700 transition-all">
-        Dismiss
-      </button>
+      <h3 class="text-white text-lg font-bold mb-2">Abandon Workout?</h3>
+      <p class="text-xs text-slate-400 mb-6 leading-relaxed">
+        You have not reached your target of <span id="confirmTargetReps" class="text-amber-500 font-bold">-- reps</span>. Ending the session now will terminate tracking immediately. Are you sure you want to end?
+      </p>
+      
+      <div class="flex items-center space-x-2">
+        <button onclick="closeConfirmModal()" class="flex-grow py-3 bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold rounded-xl border border-slate-700 transition-all">
+          No, Continue
+        </button>
+        <button onclick="terminateWorkoutConfirmed()" class="flex-grow py-3 bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold rounded-xl transition-all">
+          Yes, End Session
+        </button>
+      </div>
     </div>
   </div>
 
-  <!-- FOOTER STATS & SPEECH SETTING -->
-  <footer class="mt-auto border-t border-slate-800 bg-slate-900/60 p-4">
-    <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between text-xs text-slate-500 gap-4">
-      <p>© 2026 RepTracker AI. Built for direct browser camera feedback.</p>
-      
-      <div class="flex items-center space-x-6">
-        <!-- Voice Assist Toggle -->
-        <label class="relative flex items-center cursor-pointer">
-          <input type="checkbox" id="voiceToggle" checked class="sr-only peer">
-          <div class="w-9 h-5 bg-slate-800 rounded-full peer peer-focus:ring-2 peer-focus:ring-accent/20 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-slate-400 after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:bg-accent peer-checked:after:border-accent border border-slate-700"></div>
-          <span class="ml-2 text-[11px] text-slate-400 font-semibold select-none flex items-center">
-            <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"></path></svg>
-            Voice Engine Active
-          </span>
-        </label>
-
-        <!-- Sound Beep Toggle -->
-        <label class="relative flex items-center cursor-pointer">
-          <input type="checkbox" id="beepToggle" checked class="sr-only peer">
-          <div class="w-9 h-5 bg-slate-800 rounded-full peer peer-focus:ring-2 peer-focus:ring-accent/20 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-slate-400 after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:bg-accent peer-checked:after:border-accent border border-slate-700"></div>
-          <span class="ml-2 text-[11px] text-slate-400 font-semibold select-none flex items-center">
-            🔔 Retro Chime Alert
-          </span>
-        </label>
-      </div>
-    </div>
-  </footer>
-
   <!-- SCRIPT FOR WEB APP LOGIC -->
   <script>
-    // Configuration & State Elements
+    // VIEW CONTROLLER SELECTORS
+    const setupView = document.getElementById('setupView');
+    const workoutView = document.getElementById('workoutView');
+    const summaryView = document.getElementById('summaryView');
+
+    // UI ELEMENTS
     const videoElement = document.getElementById('webcam');
     const canvasElement = document.getElementById('poseCanvas');
     const canvasCtx = canvasElement.getContext('2d');
-    
     const repCounterDisplay = document.getElementById('repCounterDisplay');
-    const activeBadge = document.getElementById('activeBadge');
-    const rawPositionText = document.getElementById('rawPositionText');
-    const aiBanner = document.getElementById('aiBanner');
-    const aiBannerText = document.getElementById('aiBannerText');
-    const aiBannerAngle = document.getElementById('aiBannerAngle');
+    const workoutExerciseTitle = document.getElementById('workoutExerciseTitle');
+    const workoutGoalTrackerText = document.getElementById('workoutGoalTrackerText');
     const exerciseStateGauge = document.getElementById('exerciseStateGauge');
-    const currentExerciseTitle = document.getElementById('currentExerciseTitle');
-    const statusDot = document.getElementById('statusDot');
-    const statusText = document.getElementById('statusText');
-    const timerDisplay = document.getElementById('timerDisplay');
-    const caloriesDisplay = document.getElementById('caloriesDisplay');
-    const accuracyDisplay = document.getElementById('accuracyDisplay');
+    const rawPositionText = document.getElementById('rawPositionText');
+    const workoutTimerDisplay = document.getElementById('workoutTimerDisplay');
+    const workoutAccuracyDisplay = document.getElementById('workoutAccuracyDisplay');
+    const workoutCaloriesDisplay = document.getElementById('workoutCaloriesDisplay');
+    const badFormToast = document.getElementById('badFormToast');
+    const formWarningAlert = document.getElementById('formWarningAlert');
     const counterPulseBox = document.getElementById('counterPulseBox');
+    
+    // SETUP VIEW CONTROLLER VALUES
+    const targetRepsInput = document.getElementById('targetRepsInput');
+    const targetTimeInput = document.getElementById('targetTimeInput');
+    const targetRepsVal = document.getElementById('targetRepsVal');
+    const targetTimeVal = document.getElementById('targetTimeVal');
 
-    // Control buttons
-    const btnStartCamera = document.getElementById('btnStartCamera');
-    const btnToggleWorkout = document.getElementById('btnToggleWorkout');
-    const btnResetSession = document.getElementById('btnResetSession');
-    const btnClearHistory = document.getElementById('btnClearHistory');
-    const onboardingScreen = document.getElementById('onboardingScreen');
-    const modelLoadingSpinner = document.getElementById('modelLoadingSpinner');
-
-    // UI Configuration & States
+    // STATE MACHINE CONTROLS
     let activeExercise = 'push-up';
+    let targetReps = 10;
+    let targetTime = 30; // Seconds
+    
     let repsCount = 0;
+    let rejectedRepsCount = 0;
     let exerciseActive = false;
+    let cameraActive = false;
+    let isPaused = false;
+    
     let timerInterval = null;
     let secondsElapsed = 0;
     let computedCalories = 0.0;
-    let totalFormAccuracy = 100;
-    let accuracyMeasurementsCount = 0;
+    
+    // Moving average of postural accuracy score during active motion phase
+    let currentMotionAccuracyHistory = [];
+    let repAccuracySummary = []; // Holds computed correctness scores for all *valid* logged repetitions
 
-    // Movement Tracking Threshold Automata States ('out', 'up', 'down')
-    let exerciseState = 'out'; 
-    let wasCalibrated = false;
+    // State thresholds automata ('out', 'up', 'down')
+    let exerciseState = 'out';
+    let stream = null;
 
-    // Web Speech API Synthesis Engine
+    // AUDIO GENERATOR ENGINE
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     const synth = window.speechSynthesis;
     let voiceSynthesisActive = true;
-    let chimesActive = true;
+    let soundChimesActive = true;
 
-    // Local Storage Base Keys
+    // Local Storage Logging key
     const WORKOUT_LOG_KEY = 'reptracker_ai_workout_log_v2';
 
-    // Sound alert generator (Synthesizer/Web Audio API)
-    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    
-    function triggerRepAudioChime() {
-      if (!chimesActive) return;
+    // Voice warnings interval throttles to prevent speech buffer stacking
+    let lastVoiceWarningTimestamp = 0;
+    const VOICE_WARNING_THROTTLE_MS = 5000; // Speak at most once every 5 seconds
+
+    // Audio tone synthesizers
+    function playSoundTone(frequency, duration, type = 'sine') {
+      if (!soundChimesActive) return;
       try {
-        // Resume safety check for browser security context suspension
         if (audioCtx.state === 'suspended') {
           audioCtx.resume();
         }
@@ -372,21 +492,840 @@
         osc.connect(gainNode);
         gainNode.connect(audioCtx.destination);
         
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(600, audioCtx.currentTime); // Pitch
-        osc.frequency.exponentialRampToValueAtTime(1200, audioCtx.currentTime + 0.12);
+        osc.type = type;
+        osc.frequency.setValueAtTime(frequency, audioCtx.currentTime);
         
         gainNode.gain.setValueAtTime(0.15, audioCtx.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.15);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
         
         osc.start();
-        osc.stop(audioCtx.currentTime + 0.15);
+        osc.stop(audioCtx.currentTime + duration);
       } catch (err) {
-        console.error("Audio beep error:", err);
+        console.error("Synthesized sound error:", err);
       }
     }
 
-    // Modal/Alert Interceptor
+    // High rising chime for successful validation rep (75%+)
+    function triggerRepAudioChime() {
+      playSoundTone(523.25, 0.15); // C5
+      setTimeout(() => {
+        playSoundTone(659.25, 0.15); // E5
+      }, 70);
+    }
+
+    // Flat error buzz for bad form rep failures (<75%)
+    function triggerFormBuzzChime() {
+      playSoundTone(150, 0.35, 'sawtooth');
+    }
+
+    // Double alert chime for crossing time limits (exactly on deadline)
+    function triggerOvertimeChime() {
+      playSoundTone(880, 0.2); // A5
+      setTimeout(() => playSoundTone(880, 0.2), 250);
+    }
+
+    // Web Speech vocalizer with rate adjustment & rate throttle
+    function speakSystemCue(phrase, bypassThrottle = false) {
+      if (!voiceSynthesisActive || !synth) return;
+      
+      const now = Date.now();
+      if (!bypassThrottle && (now - lastVoiceWarningTimestamp < VOICE_WARNING_THROTTLE_MS)) {
+        return; // Suppressed due to speaking throttle limit
+      }
+      
+      if (!bypassThrottle) {
+        lastVoiceWarningTimestamp = now;
+      }
+
+      synth.cancel(); // Stop current speech queues
+      const utterance = new SpeechSynthesisUtterance(phrase);
+      utterance.rate = 1.15;
+      utterance.pitch = 1.0;
+      synth.speak(utterance);
+    }
+
+    // Setup values reactive updates
+    function updateTargetLabels() {
+      targetRepsVal.innerText = `${targetRepsInput.value} reps`;
+      targetTimeVal.innerText = `${targetTimeInput.value}s`;
+    }
+
+    function selectSetupExercise(exerciseType) {
+      activeExercise = exerciseType;
+      document.querySelectorAll('.setup-ex-btn').forEach(btn => {
+        btn.classList.remove('border-accent', 'bg-accentSoft', 'text-white');
+        btn.classList.add('border-slate-800', 'hover:border-slate-700', 'bg-slate-900/50', 'text-slate-300');
+        // Strip active neon glows
+        const labels = btn.querySelectorAll('span');
+        if (labels[0]) labels[0].classList.remove('text-accent');
+      });
+
+      const activeBtn = document.getElementById(`setup-ex-${exerciseType}`);
+      if (activeBtn) {
+        activeBtn.classList.add('border-accent', 'bg-accentSoft', 'text-white');
+        activeBtn.classList.remove('border-slate-800', 'hover:border-slate-700', 'bg-slate-900/50', 'text-slate-300');
+        const labels = activeBtn.querySelectorAll('span');
+        if (labels[0]) labels[0].classList.add('text-accent');
+      }
+    }
+
+    // Transitions Setup to Active HUD Viewport
+    document.getElementById('btnLaunchWorkout').addEventListener('click', () => {
+      targetReps = parseInt(targetRepsInput.value);
+      targetTime = parseInt(targetTimeInput.value);
+      
+      // Reset variables
+      repsCount = 0;
+      rejectedRepsCount = 0;
+      secondsElapsed = 0;
+      computedCalories = 0.0;
+      currentMotionAccuracyHistory = [];
+      repAccuracySummary = [];
+      exerciseState = 'out';
+      isPaused = false;
+      
+      // Update Workout View Titles
+      const displayNames = {
+        'push-up': 'Push-ups Mode',
+        'squat': 'Squats Mode',
+        'pull-up': 'Pull-ups Mode',
+        'sit-up': 'Sit-ups Mode'
+      };
+      workoutExerciseTitle.innerText = displayNames[activeExercise];
+      workoutGoalTrackerText.innerText = `Goal: 0/${targetReps} reps`;
+      repCounterDisplay.innerText = "00";
+      workoutAccuracyDisplay.innerText = "--";
+      workoutCaloriesDisplay.innerHTML = `0.0 <span class="text-[9px] text-slate-500">kcal</span>`;
+      
+      // Switch view panels
+      setupView.classList.add('hidden');
+      workoutView.classList.remove('hidden');
+
+      // Start video camera flow
+      if (!cameraActive) {
+        startCameraAndModel();
+      } else {
+        resumeWorkoutSession();
+      }
+    });
+
+    // POSE DETECTION ENGINE LOADER (OPTIMIZED LITE MODEL)
+    const pose = new Pose({
+      locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`
+    });
+
+    pose.setOptions({
+      modelComplexity: 0, // 0 = LITE. Corrects processing power spikes on mobile/safari browsers.
+      smoothLandmarks: true,
+      enableSegmentation: false,
+      smoothSegmentation: false,
+      minDetectionConfidence: 0.55,
+      minTrackingConfidence: 0.55
+    });
+
+    pose.onResults(onPoseResults);
+
+    async function startCameraAndModel() {
+      const spinner = document.getElementById('modelLoadingSpinner');
+      spinner.classList.remove('hidden');
+      
+      statusText.innerText = "Powering Lens...";
+      statusDot.className = "w-2.5 h-2.5 rounded-full bg-yellow-500 animate-pulse";
+
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: {
+            facingMode: 'user',
+            width: { ideal: 480 },
+            height: { ideal: 640 }
+          },
+          audio: false
+        });
+
+        videoElement.srcObject = stream;
+        videoElement.play();
+
+        statusText.innerText = "Starting Core AI...";
+        await pose.initialize();
+        spinner.classList.add('hidden');
+        
+        statusText.innerText = "Vision Active";
+        statusDot.className = "w-2.5 h-2.5 rounded-full bg-accent live-pulse";
+        
+        cameraActive = true;
+        exerciseActive = true;
+        
+        startTimer();
+        requestAnimationFrame(processVideoFrame);
+        speakSystemCue("Engine loaded. Start your targets now.", true);
+      } catch (err) {
+        spinner.classList.add('hidden');
+        statusText.innerText = "Access Blocked";
+        statusDot.className = "w-2.5 h-2.5 rounded-full bg-rose-500";
+        showAlert("Camera Unvailable", "Please grant camera permission in your browser or device settings to allow skeletal tracking.");
+        transitionToSetup();
+      }
+    }
+
+    let lastInferenceTime = 0;
+    const INFERENCE_THROTTLE_MS = 65; // Caps analysis frames per second to save battery cycles
+
+    async function processVideoFrame(timestamp) {
+      if (!cameraActive || videoElement.paused || videoElement.ended) {
+        requestAnimationFrame(processVideoFrame);
+        return;
+      }
+
+      const elapsed = timestamp - lastInferenceTime;
+      if (elapsed >= INFERENCE_THROTTLE_MS) {
+        try {
+          await pose.send({ image: videoElement });
+          lastInferenceTime = timestamp;
+        } catch (e) {
+          console.error("Pose delivery drop:", e);
+        }
+      }
+      requestAnimationFrame(processVideoFrame);
+    }
+
+    // Core pose results callback
+    function onPoseResults(results) {
+      if (canvasElement.width !== canvasElement.clientWidth || canvasElement.height !== canvasElement.clientHeight) {
+        canvasElement.width = canvasElement.clientWidth;
+        canvasElement.height = canvasElement.clientHeight;
+      }
+
+      canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
+      canvasCtx.drawImage(results.image, 0, 0, canvasElement.width, canvasElement.height);
+
+      if (!results.poseLandmarks) {
+        rawPositionText.innerText = "ALIGNING BODY SCAN MODULE";
+        rawPositionText.className = "text-rose-400 font-bold tracking-wider";
+        aiBanner.classList.add('opacity-0');
+        return;
+      }
+
+      // Draw skeleton overlays
+      drawConnectors(canvasCtx, results.poseLandmarks, POSE_CONNECTIONS, { color: '#475569', lineWidth: 1.5 });
+      drawLandmarks(canvasCtx, results.poseLandmarks, { color: '#10B981', lineWidth: 0.5, radius: 2 });
+
+      if (exerciseActive && !isPaused) {
+        evaluateWorkoutHeuristics(results.poseLandmarks);
+      }
+    }
+
+    // CORE EVALUATOR FRAMEWORK
+    function evaluateWorkoutHeuristics(landmarks) {
+      const leftShoulder = landmarks[11];
+      const rightShoulder = landmarks[12];
+      const leftHip = landmarks[23];
+      const rightHip = landmarks[24];
+      const leftAnkle = landmarks[27];
+      const rightAnkle = landmarks[28];
+
+      // Guard checking: Check joints visibility levels to trigger vocal instruction warnings
+      const keyNodes = [leftShoulder, rightShoulder, leftHip, rightHip];
+      const skeletonFullyVisible = keyNodes.every(node => node && node.visibility > 0.45);
+
+      if (!skeletonFullyVisible) {
+        rawPositionText.innerText = "ALIGNMENT ZONE OBSCURED";
+        rawPositionText.className = "text-rose-400 font-bold tracking-wider";
+        showAIBanner("Postural Warning: Skeleton is not fully visible!", "--", true);
+        speakSystemCue("Adjust your position. Body joints are not fully visible.");
+        return;
+      }
+
+      // Check distance parameters (Too close alert based on shoulder width bounds)
+      const shoulderWidth = Math.abs(leftShoulder.x - rightShoulder.x);
+      if (shoulderWidth > 0.45) {
+        showAIBanner("Warning: Too close to camera!", "--", true);
+        speakSystemCue("You are standing too close. Please step back.");
+        return;
+      }
+
+      // Automatically select dominant profile side
+      const side = (leftShoulder.visibility + landmarks[13].visibility + landmarks[15].visibility) > 
+                   (rightShoulder.visibility + landmarks[14].visibility + landmarks[16].visibility) ? 'left' : 'right';
+
+      if (activeExercise === 'push-up') {
+        runPushupEngine(landmarks, side);
+      } else if (activeExercise === 'squat') {
+        runSquatEngine(landmarks, side);
+      } else if (activeExercise === 'pull-up') {
+        runPullupEngine(landmarks, side);
+      } else if (activeExercise === 'sit-up') {
+        runSitupEngine(landmarks, side);
+      }
+    }
+
+    // MATHEMATICAL ANGLE TRIG FUNCTIONS
+    function calculateJointAngle(p1, p2, p3) {
+      if (!p1 || !p2 || !p3) return 180;
+      
+      const v1 = { x: p1.x - p2.x, y: p1.y - p2.y, z: p1.z - p2.z };
+      const v2 = { x: p3.x - p2.x, y: p3.y - p2.y, z: p3.z - p2.z };
+      
+      const dotProduct = v1.x * v2.x + v1.y * v2.y + v1.z * v2.z;
+      const magV1 = Math.sqrt(v1.x * v1.x + v1.y * v1.y + v1.z * v1.z);
+      const magV2 = Math.sqrt(v2.x * v2.x + v2.y * v2.y + v2.z * v2.z);
+      
+      if (magV1 * magV2 === 0) return 0;
+      
+      const cosAngle = dotProduct / (magV1 * magV2);
+      const radians = Math.acos(Math.max(-1, Math.min(1, cosAngle)));
+      return (radians * 180.0) / Math.PI;
+    }
+
+    // REAL-TIME FORMS FEEDBACK DISPLAY SYSTEM
+    function showAIBanner(message, data, isWarning = false) {
+      aiBanner.classList.remove('opacity-0', '-translate-y-2');
+      aiBannerText.innerText = message;
+      aiBannerAngle.innerText = data;
+      
+      if (isWarning) {
+        aiBanner.className = "absolute top-3 left-3 right-3 bg-red-950/95 border border-red-500/50 px-4 py-3 rounded-2xl flex items-center justify-between text-xs backdrop-blur shadow-lg text-red-200 transition-all duration-300 z-20";
+        aiBannerAngle.className = "font-mono text-red-400 font-bold";
+      } else {
+        aiBanner.className = "absolute top-3 left-3 right-3 bg-slate-900/95 border border-slate-700/80 px-4 py-3 rounded-2xl flex items-center justify-between text-xs backdrop-blur text-slate-200 transition-all duration-300 z-20";
+        aiBannerAngle.className = "font-mono text-accent font-bold";
+      }
+    }
+
+    /* =============================================================
+       INDIVIDUAL EXERCISE IMPLEMENTATIONS (With Form Scoring & Alerts)
+    ============================================================= */
+
+    function runPushupEngine(landmarks, side) {
+      const shoulder = landmarks[side === 'left' ? 11 : 12];
+      const elbow = landmarks[side === 'left' ? 13 : 14];
+      const wrist = landmarks[side === 'left' ? 15 : 16];
+      const hip = landmarks[side === 'left' ? 23 : 24];
+      const knee = landmarks[side === 'left' ? 25 : 26];
+
+      const elbowAngle = calculateJointAngle(shoulder, elbow, wrist);
+      const hipAngle = calculateJointAngle(shoulder, hip, knee);
+
+      // Auto-bootstrap calibration
+      if (exerciseState === 'out') {
+        exerciseState = (elbowAngle > 140) ? 'up' : 'down';
+      }
+
+      // Tracking progress bar mapping state
+      let progressPct = 0;
+      if (elbowAngle > 145) progressPct = 0;
+      else if (elbowAngle < 90) progressPct = 100;
+      else progressPct = Math.round(((145 - elbowAngle) / 55) * 100);
+      updateStateGauge(progressPct);
+
+      // Calculate form posture accuracy
+      // Spine core integrity is based on maintaining a straight hip (180° ideal)
+      const dev = Math.abs(180 - hipAngle);
+      let formAccuracy = Math.round(100 - (dev * 1.8));
+      formAccuracy = Math.max(10, Math.min(100, formAccuracy));
+
+      // Append measurements if user is in motion (actively squatting/pressing)
+      if (elbowAngle < 135) {
+        currentMotionAccuracyHistory.push(formAccuracy);
+        workoutAccuracyDisplay.innerText = `${formAccuracy}%`;
+      }
+
+      const instruction = exerciseState === 'up' ? 'GO DOWN' : 'PUSH UP!';
+      rawPositionText.innerText = `ELBOW: ${Math.round(elbowAngle)}° [${instruction}]`;
+      rawPositionText.className = "text-accent font-mono tracking-wider";
+
+      if (elbowAngle < 92) {
+        if (exerciseState === 'up') {
+          exerciseState = 'down';
+          showAIBanner("Deep position held! Now push up.", `${Math.round(elbowAngle)}°`);
+        }
+      } else if (elbowAngle > 145) {
+        if (exerciseState === 'down') {
+          exerciseState = 'up';
+          evaluateRepetitionConclusion(formAccuracy);
+        }
+      }
+
+      // Check alerts
+      if (hipAngle < 155) {
+        showAIBanner("Keep your hips up and body straight!", `${Math.round(hipAngle)}°`, true);
+        speakSystemCue("Keep your back straight.");
+      } else {
+        showAIBanner("Excellent push-up posture alignment", `${Math.round(elbowAngle)}°`);
+      }
+    }
+
+    function runSquatEngine(landmarks, side) {
+      const hip = landmarks[side === 'left' ? 23 : 24];
+      const knee = landmarks[side === 'left' ? 25 : 26];
+      const ankle = landmarks[side === 'left' ? 27 : 28];
+      const shoulder = landmarks[side === 'left' ? 11 : 12];
+
+      const kneeAngle = calculateJointAngle(hip, knee, ankle);
+      const backAngle = calculateJointAngle(shoulder, hip, knee);
+
+      if (exerciseState === 'out') {
+        exerciseState = (kneeAngle > 140) ? 'up' : 'down';
+      }
+
+      let progressPct = 0;
+      if (kneeAngle > 155) progressPct = 0;
+      else if (kneeAngle < 95) progressPct = 100;
+      else progressPct = Math.round(((155 - kneeAngle) / 60) * 100);
+      updateStateGauge(progressPct);
+
+      // Form validation rules: Torso must remain balanced, avoiding leaning too forward
+      // Ideally leaning angle should remain above 80° relative to hips
+      let formAccuracy = 100;
+      if (backAngle < 82) {
+        formAccuracy = Math.round(100 - (82 - backAngle) * 2.2);
+        formAccuracy = Math.max(10, Math.min(100, formAccuracy));
+      }
+
+      if (kneeAngle < 140) {
+        currentMotionAccuracyHistory.push(formAccuracy);
+        workoutAccuracyDisplay.innerText = `${formAccuracy}%`;
+      }
+
+      const instruction = exerciseState === 'up' ? 'SQUAT DOWN' : 'STAND UP!';
+      rawPositionText.innerText = `KNEE: ${Math.round(kneeAngle)}° [${instruction}]`;
+      rawPositionText.className = "text-accent font-mono tracking-wider";
+
+      if (kneeAngle < 95) {
+        if (exerciseState === 'up') {
+          exerciseState = 'down';
+          showAIBanner("Deep Squat Depth! Now stand up.", `${Math.round(kneeAngle)}°`);
+        }
+      } else if (kneeAngle > 150) {
+        if (exerciseState === 'down') {
+          exerciseState = 'up';
+          evaluateRepetitionConclusion(formAccuracy);
+        }
+      }
+
+      if (backAngle < 80) {
+        showAIBanner("Form Warning: Keep chest up, don't lean too far forward!", `${Math.round(backAngle)}°`, true);
+        speakSystemCue("Keep your chest up.");
+      } else {
+        showAIBanner("Squat alignment is correct", `${Math.round(kneeAngle)}°`);
+      }
+    }
+
+    function runPullupEngine(landmarks, side) {
+      const shoulder = landmarks[side === 'left' ? 11 : 12];
+      const elbow = landmarks[side === 'left' ? 13 : 14];
+      const wrist = landmarks[side === 'left' ? 15 : 16];
+      const nose = landmarks[0];
+
+      const shouldersY = (landmarks[11].y + landmarks[12].y) / 2;
+      const noseY = nose.y;
+      const wristLevelY = (landmarks[15].y + landmarks[16].y) / 2;
+
+      let progressPct = 0;
+      const totalSpan = shouldersY - wristLevelY;
+      if (totalSpan > 0) {
+        const relativePosition = shouldersY - noseY;
+        progressPct = Math.max(0, Math.min(100, Math.round((relativePosition / totalSpan) * 100)));
+      }
+
+      if (exerciseState === 'out') {
+        exerciseState = (progressPct > 60) ? 'up' : 'down';
+      }
+
+      updateStateGauge(progressPct);
+
+      // Symmetrical pulling accuracy
+      const leftElbowAngle = calculateJointAngle(landmarks[11], landmarks[13], landmarks[15]);
+      const rightElbowAngle = calculateJointAngle(landmarks[12], landmarks[14], landmarks[16]);
+      const symmetryDelta = Math.abs(leftElbowAngle - rightElbowAngle);
+      
+      let formAccuracy = Math.round(100 - (symmetryDelta * 1.5));
+      formAccuracy = Math.max(10, Math.min(100, formAccuracy));
+
+      if (progressPct > 20) {
+        currentMotionAccuracyHistory.push(formAccuracy);
+        workoutAccuracyDisplay.innerText = `${formAccuracy}%`;
+      }
+
+      const instruction = exerciseState === 'down' ? 'PULL UP!' : 'DESCEND';
+      rawPositionText.innerText = `HEIGHT: ${progressPct}% [${instruction}]`;
+      rawPositionText.className = "text-accent font-mono tracking-wider";
+
+      if (progressPct >= 90) {
+        if (exerciseState === 'down') {
+          exerciseState = 'up';
+          showAIBanner("Chin is above bar! Now lower slowly.", `${progressPct}%`);
+        }
+      } else if (progressPct <= 25) {
+        if (exerciseState === 'up') {
+          exerciseState = 'down';
+          evaluateRepetitionConclusion(formAccuracy);
+        }
+      }
+
+      if (symmetryDelta > 25) {
+        showAIBanner("Pull unevenly! Balance your arms.", `${Math.round(symmetryDelta)}° diff`, true);
+        speakSystemCue("Balance your arms.");
+      } else {
+        showAIBanner("Good symmetrical pull form", `${progressPct}%`);
+      }
+    }
+
+    function runSitupEngine(landmarks, side) {
+      const shoulder = landmarks[side === 'left' ? 11 : 12];
+      const hip = landmarks[side === 'left' ? 23 : 24];
+      const knee = landmarks[side === 'left' ? 25 : 26];
+      const ankle = landmarks[side === 'left' ? 27 : 28];
+
+      const hipAngle = calculateJointAngle(shoulder, hip, knee);
+      const kneeFlexAngle = calculateJointAngle(hip, knee, ankle);
+
+      if (exerciseState === 'out') {
+        exerciseState = (hipAngle < 80) ? 'up' : 'down';
+      }
+
+      let progressPct = 0;
+      if (hipAngle > 130) progressPct = 0;
+      else if (hipAngle < 65) progressPct = 100;
+      else progressPct = Math.round(((130 - hipAngle) / 65) * 100);
+      updateStateGauge(progressPct);
+
+      // Stability: Knee flexion angle should remain stable around 90 degrees (bent)
+      const kneeDev = Math.abs(90 - kneeFlexAngle);
+      let formAccuracy = Math.round(100 - (kneeDev * 1.4));
+      formAccuracy = Math.max(10, Math.min(100, formAccuracy));
+
+      if (hipAngle < 120) {
+        currentMotionAccuracyHistory.push(formAccuracy);
+        workoutAccuracyDisplay.innerText = `${formAccuracy}%`;
+      }
+
+      const instruction = exerciseState === 'down' ? 'SIT UP!' : 'LIE DOWN';
+      rawPositionText.innerText = `HIP ANGLE: ${Math.round(hipAngle)}° [${instruction}]`;
+      rawPositionText.className = "text-accent font-mono tracking-wider";
+
+      if (hipAngle < 68) {
+        if (exerciseState === 'down') {
+          exerciseState = 'up';
+          showAIBanner("Ab contraction point! Now lie back down.", `${Math.round(hipAngle)}°`);
+        }
+      } else if (hipAngle > 125) {
+        if (exerciseState === 'up') {
+          exerciseState = 'down';
+          evaluateRepetitionConclusion(formAccuracy);
+        }
+      }
+
+      if (kneeFlexAngle < 60 || kneeFlexAngle > 120) {
+        showAIBanner("Form Warning: Keep your feet flat, stabilize your knees!", `${Math.round(kneeFlexAngle)}°`, true);
+        speakSystemCue("Keep your feet flat.");
+      } else {
+        showAIBanner("Good sit-up control dynamics", `${Math.round(hipAngle)}°`);
+      }
+    }
+
+    // UPDATE EXERCISE RANGE STATE GAUGE
+    function updateStateGauge(pct) {
+      exerciseStateGauge.style.width = `${Math.min(100, Math.max(0, pct))}%`;
+    }
+
+    /* =============================================================
+       REPETITION REGISTRATION & ACCURACY STRICT POLICY (75%+)
+    ============================================================= */
+
+    function evaluateRepetitionConclusion(lastFrameAccuracy) {
+      // Aggregate moving average accuracy during this active rep motion phase
+      let finalRepFormScore = lastFrameAccuracy;
+      if (currentMotionAccuracyHistory.length > 0) {
+        const sum = currentMotionAccuracyHistory.reduce((a, b) => a + b, 0);
+        finalRepFormScore = Math.round(sum / currentMotionAccuracyHistory.length);
+      }
+      
+      // Flush active history to prep next repetition
+      currentMotionAccuracyHistory = [];
+
+      // STRICT CHECK: Reject any rep lower than 75%
+      if (finalRepFormScore < 75) {
+        rejectedRepsCount++;
+        triggerFormBuzzChime();
+        displayFormRejectionToast(finalRepFormScore);
+        return;
+      }
+
+      // Valid repetition execution completed!
+      repsCount++;
+      repAccuracySummary.push(finalRepFormScore);
+      triggerRepAudioChime();
+
+      // UI display updates
+      repCounterDisplay.innerText = repsCount.toString().padStart(2, '0');
+      workoutGoalTrackerText.innerText = `Goal: ${repsCount}/${targetReps} reps`;
+      
+      // Pulse animation effect
+      counterPulseBox.classList.remove('scale-100');
+      counterPulseBox.classList.add('scale-110', 'text-accent');
+      setTimeout(() => {
+        counterPulseBox.classList.remove('scale-110', 'text-accent');
+        counterPulseBox.classList.add('scale-100');
+      }, 180);
+
+      // Speak rep number
+      speakSystemCue(`${repsCount}`, true);
+
+      // Dynamically calculate calorie spent
+      const calorieConstants = { 'push-up': 0.42, 'squat': 0.55, 'pull-up': 1.10, 'sit-up': 0.35 };
+      computedCalories += (calorieConstants[activeExercise] || 0.4);
+      workoutCaloriesDisplay.innerHTML = `${computedCalories.toFixed(1)} <span class="text-[9px] text-slate-500">kcal</span>`;
+
+      // Check if target goal is completed
+      if (repsCount >= targetReps) {
+        concludeWorkoutSession();
+      }
+    }
+
+    // Triggers flash animations on bad form
+    function displayFormRejectionToast(score) {
+      badFormToast.innerText = `Form Refused (${score}%)`;
+      badFormToast.classList.remove('opacity-0');
+      formWarningAlert.className = "absolute inset-0 border-8 border-rose-600/70 pointer-events-none transition-all duration-150 z-10 rounded-3xl";
+      
+      speakSystemCue("Rep rejected. Keep your form straight.", true);
+
+      setTimeout(() => {
+        badFormToast.classList.add('opacity-0');
+        formWarningAlert.className = "absolute inset-0 border-8 border-rose-600/0 pointer-events-none transition-all duration-150 z-10 rounded-3xl";
+      }, 1600);
+    }
+
+    /* =============================================================
+       TIME & SESSION MANAGER
+    ============================================================= */
+
+    let isTimeOverLimit = false;
+
+    function startTimer() {
+      isTimeOverLimit = false;
+      document.getElementById('timerCard').className = "bg-panelbg border border-slate-800 p-3.5 rounded-2xl flex flex-col justify-center transition-all duration-300";
+      
+      if (timerInterval) clearInterval(timerInterval);
+      timerInterval = setInterval(() => {
+        if (!isPaused) {
+          secondsElapsed++;
+          updateTimerDisplay();
+          
+          // Verify time boundary triggers
+          if (secondsElapsed > targetTime && !isTimeOverLimit) {
+            isTimeOverLimit = true;
+            triggerOvertimeChime();
+            speakSystemCue("Target time exceeded. Keep pushing to reach your rep target!", true);
+            // Visual alert change (Turn border/text card orange to signal overtime)
+            document.getElementById('timerCard').className = "bg-yellow-950/40 border border-yellow-500/50 p-3.5 rounded-2xl flex flex-col justify-center transition-all duration-300";
+          }
+        }
+      }, 1000);
+    }
+
+    function updateTimerDisplay() {
+      workoutTimerDisplay.innerText = formatSecondsToTime(secondsElapsed);
+    }
+
+    function formatSecondsToTime(totalSecs) {
+      const mins = Math.floor(totalSecs / 60);
+      const secs = totalSecs % 60;
+      return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    }
+
+    // Play/Pause Workout Manager
+    document.getElementById('btnPlayPause').addEventListener('click', () => {
+      const btn = document.getElementById('btnPlayPause');
+      if (!isPaused) {
+        isPaused = true;
+        btn.innerText = "Resume";
+        btn.className = "px-6 py-3 bg-yellow-500 text-slate-950 font-extrabold text-xs uppercase tracking-wider rounded-xl transition-all hover:bg-yellow-400";
+        document.getElementById('currentPhaseLabel').innerText = "SESSION PAUSED";
+        speakSystemCue("Workout paused.", true);
+      } else {
+        isPaused = false;
+        btn.innerText = "Pause";
+        btn.className = "px-6 py-3 bg-accent text-darkbg font-extrabold text-xs uppercase tracking-wider rounded-xl transition-all hover:bg-emerald-400";
+        document.getElementById('currentPhaseLabel').innerText = "TRACKING ACTIVE";
+        speakSystemCue("Resuming session.", true);
+      }
+    });
+
+    // EARLY TERMINATION MODAL LOGIC
+    document.getElementById('btnEndWorkoutEarly').addEventListener('click', () => {
+      if (repsCount < targetReps) {
+        document.getElementById('confirmTargetReps').innerText = `${targetReps}`;
+        const modal = document.getElementById('confirmEndModal');
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+        isPaused = true;
+        speakSystemCue("Are you sure you want to quit early?", true);
+      } else {
+        concludeWorkoutSession();
+      }
+    });
+
+    function closeConfirmModal() {
+      const modal = document.getElementById('confirmEndModal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+      isPaused = false;
+    }
+
+    function terminateWorkoutConfirmed() {
+      closeConfirmModal();
+      concludeWorkoutSession(true); // Terminate early
+    }
+
+    /* =============================================================
+       DASHBOARD SUMMARY & CRITIQUE GENERATION
+    ============================================================= */
+
+    function concludeWorkoutSession(abandoned = false) {
+      // Pause variables
+      exerciseActive = false;
+      stopTimer();
+
+      // Play finished sounds
+      playSoundTone(440, 0.2); // Success sound sequence
+      setTimeout(() => playSoundTone(554.37, 0.2), 150);
+      setTimeout(() => playSoundTone(659.25, 0.4), 300);
+
+      // Aggregate final results
+      const finalReps = repsCount;
+      const finalAvgForm = repAccuracySummary.length > 0 
+        ? Math.round(repAccuracySummary.reduce((a, b) => a + b, 0) / repAccuracySummary.length)
+        : 100;
+      
+      const extraSeconds = Math.max(0, secondsElapsed - targetTime);
+
+      // Save to localStorage Workout History DB
+      const workoutItem = {
+        id: 'workout_' + Date.now(),
+        date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }),
+        exercise: activeExercise,
+        reps: finalReps,
+        duration: formatSecondsToTime(secondsElapsed),
+        calories: computedCalories.toFixed(1),
+        accuracy: finalAvgForm
+      };
+      
+      let db = getWorkoutHistory();
+      db.unshift(workoutItem);
+      localStorage.setItem(WORKOUT_LOG_KEY, JSON.stringify(db));
+
+      // BUILD SUMMARY PANEL LABELS
+      document.getElementById('sumTotalReps').innerText = finalReps;
+      document.getElementById('sumTargetGoal').innerText = `Target: ${targetReps}`;
+      document.getElementById('sumTimeTaken').innerText = formatSecondsToTime(secondsElapsed);
+      document.getElementById('sumExtraTime').innerText = extraSeconds > 0 
+        ? `+${extraSeconds}s Overtime` 
+        : `Ahead of Time!`;
+      
+      document.getElementById('sumAvgForm').innerText = `${finalAvgForm}%`;
+      document.getElementById('sumRejectedReps').innerText = `${rejectedRepsCount} invalid reps`;
+      document.getElementById('sumTotalCalories').innerText = computedCalories.toFixed(1);
+
+      // Trophy Icon vs Incomplete Icon
+      const summaryHeroIcon = document.getElementById('summaryHeroIcon');
+      const summaryHeadline = document.getElementById('summaryHeadline');
+      
+      if (abandoned) {
+        summaryHeroIcon.innerHTML = `
+          <svg class="w-8 h-8 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+          </svg>
+        `;
+        summaryHeroIcon.className = "w-16 h-16 bg-rose-950/30 border border-rose-500/20 rounded-full flex items-center justify-center mx-auto mb-4";
+        summaryHeadline.innerText = "Workout Halted Early";
+      } else {
+        summaryHeroIcon.innerHTML = `
+          <svg class="w-8 h-8 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7.463 8.2l.859-3.436A3 3 0 018.318 10h7.364a3 3 0 012.922 2.364l.859 3.436A2 2 0 0117.5 18H6.5a2 2 0 01-1.963-2.2z" />
+          </svg>
+        `;
+        summaryHeroIcon.className = "w-16 h-16 bg-yellow-950/30 border border-yellow-500/20 rounded-full flex items-center justify-center mx-auto mb-4";
+        summaryHeadline.innerText = "Target Goal Achieved!";
+      }
+
+      // GENERATE CUSTOMIZED AI CRITIQUE BASED ON STATISTICS
+      generateBiometricCritique(finalReps, finalAvgForm, extraSeconds, abandoned);
+
+      // Transition screen view
+      workoutView.classList.add('hidden');
+      summaryView.classList.remove('hidden');
+    }
+
+    function generateBiometricCritique(reps, avgForm, overtimeSecs, abandoned) {
+      const critiqueBox = document.getElementById('critiqueBox');
+      let html = "";
+
+      // Posture Feedback Evaluator block
+      if (avgForm >= 90) {
+        html += `<p class="text-emerald-400 font-extrabold flex items-center gap-1.5"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/></svg> elite postural balance score (${avgForm}%)</p>
+                 <p class="text-[11px] text-slate-400 mt-1">Your movement trajectory matches clean biomechanical guidelines. Core stability remained completely intact during transitions.</p>`;
+      } else if (avgForm >= 80) {
+        html += `<p class="text-amber-400 font-extrabold flex items-center gap-1.5">👍 Stable, Solid movement consistency (${avgForm}%)</p>
+                 <p class="text-[11px] text-slate-400 mt-1">Good stabilization overall. Some slight spine flexion sags or weight leaning shifts were detected on deep contractions.</p>`;
+      } else {
+        html += `<p class="text-rose-400 font-extrabold flex items-center gap-1.5">⚠️ Sub-optimal form alignment (${avgForm}%)</p>
+                 <p class="text-[11px] text-slate-400 mt-1">Skeletal tracking detected high compression shifts. Maintain a controlled pacing and focus on keeping back/knees firm.</p>`;
+      }
+
+      // Overtime Feedback
+      if (overtimeSecs > 0) {
+        html += `<div class="border-t border-slate-800/80 my-2 pt-2">`;
+        html += `<p class="text-yellow-500 font-bold">⏱️ Endurance Pacing Feedback</p>`;
+        html += `<p class="text-[11px] text-slate-400 mt-0.5">You took ${overtimeSecs} seconds longer than your set pace. Prioritizing correct posture alignment over speed is excellent for structural strength building!</p>`;
+        html += `</div>`;
+      } else if (!abandoned) {
+        html += `<div class="border-t border-slate-800/80 my-2 pt-2">`;
+        html += `<p class="text-emerald-400 font-bold">⚡ Explosive Velocity Achieved</p>`;
+        html += `<p class="text-[11px] text-slate-400 mt-0.5">Completed prior to target timeline deadline. Solid work maintaining continuous exertion.</p>`;
+        html += `</div>`;
+      }
+
+      // Rejected reps breakdown
+      if (rejectedRepsCount > 0) {
+        html += `<div class="border-t border-slate-800/80 my-2 pt-2 text-[11px] text-rose-400">`;
+        html += `⚠️ AI Vision disallowed <strong>${rejectedRepsCount} repetitions</strong> that failed the 75% form correctness threshold. Maintain perfect extension to avoid invalid reps in your next log.`;
+        html += `</div>`;
+      }
+
+      critiqueBox.innerHTML = html;
+
+      // Speak concluding system analysis phrase
+      const conclusionSpeech = abandoned 
+        ? `Session complete. You completed ${reps} reps with ${avgForm} percent average form correctness.`
+        : `Target reached! Your average form correctness is ${avgForm} percent.`;
+      speakSystemCue(conclusionSpeech, true);
+    }
+
+    function stopTimer() {
+      if (timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+      }
+    }
+
+    // TRANSITION BACK TO SETUP PAGE
+    function transitionToSetup() {
+      summaryView.classList.add('hidden');
+      workoutView.classList.add('hidden');
+      setupView.classList.remove('hidden');
+      
+      statusText.innerText = "System Idle";
+      statusDot.className = "w-2.5 h-2.5 rounded-full bg-slate-500";
+    }
+
+    // LOCAL STORAGE DB UTILITES
+    function getWorkoutHistory() {
+      const stored = localStorage.getItem(WORKOUT_LOG_KEY);
+      return stored ? JSON.parse(stored) : [];
+    }
+
+    // SYSTEM ALERT INTERCEPTOR MODAL (Replacements for alert())
     function showAlert(title, message) {
       document.getElementById('alertTitle').innerText = title;
       document.getElementById('alertMessage').innerText = message;
@@ -400,734 +1339,6 @@
       modal.classList.remove('flex');
       modal.classList.add('hidden');
     }
-
-    // Init state listeners
-    document.getElementById('voiceToggle').addEventListener('change', (e) => {
-      voiceSynthesisActive = e.target.checked;
-    });
-
-    document.getElementById('beepToggle').addEventListener('change', (e) => {
-      chimesActive = e.target.checked;
-    });
-
-    // Speak helper (prevents voice pile-ups)
-    function speak(text) {
-      if (!voiceSynthesisActive || !synth) return;
-      synth.cancel(); // Stop current speaking to prevent queues block
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.rate = 1.1;
-      utterance.pitch = 1.0;
-      synth.speak(utterance);
-    }
-
-    // Timer handler
-    function startTimer() {
-      if (timerInterval) clearInterval(timerInterval);
-      timerInterval = setInterval(() => {
-        secondsElapsed++;
-        updateDashboardTimer();
-      }, 1000);
-    }
-
-    function stopTimer() {
-      if (timerInterval) {
-        clearInterval(timerInterval);
-        timerInterval = null;
-      }
-    }
-
-    function updateDashboardTimer() {
-      const mins = Math.floor(secondsElapsed / 60);
-      const secs = secondsElapsed % 60;
-      timerDisplay.innerText = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-    }
-
-    // Exercise switching logic
-    function setExercise(exerciseType) {
-      if (exerciseActive) {
-        // Save current progress before switching
-        archiveWorkoutSession();
-      }
-      
-      activeExercise = exerciseType;
-      document.querySelectorAll('.ex-tab').forEach(btn => {
-        btn.classList.remove('bg-accent', 'text-darkbg', 'shadow-sm');
-        btn.classList.add('text-slate-400', 'hover:text-white');
-      });
-
-      const activeBtn = document.getElementById(`ex-${exerciseType}`);
-      if (activeBtn) {
-        activeBtn.classList.add('bg-accent', 'text-darkbg', 'shadow-sm');
-        activeBtn.classList.remove('text-slate-400', 'hover:text-white');
-      }
-
-      // Format display names
-      const formatNames = {
-        'push-up': 'Push-ups Mode',
-        'squat': 'Squats Mode',
-        'pull-up': 'Pull-ups Mode',
-        'sit-up': 'Sit-ups Mode'
-      };
-      
-      currentExerciseTitle.innerText = formatNames[exerciseType];
-      speak(`Switched to ${exerciseType}s`);
-      
-      // Reset local workout counter states
-      resetLocalCounter();
-    }
-
-    function resetLocalCounter() {
-      repsCount = 0;
-      secondsElapsed = 0;
-      computedCalories = 0.0;
-      totalFormAccuracy = 100;
-      accuracyMeasurementsCount = 0;
-      exerciseState = 'out';
-      updateCounterUI();
-      updateDashboardTimer();
-      caloriesDisplay.innerHTML = `0.0 <span class="text-[10px] text-slate-400">kcal</span>`;
-      accuracyDisplay.innerText = `100%`;
-      exerciseStateGauge.style.width = `0%`;
-      rawPositionText.innerText = "PREPARING FORM";
-    }
-
-    function updateCounterUI() {
-      const paddedCount = repsCount.toString().padStart(2, '0');
-      repCounterDisplay.innerText = paddedCount;
-      
-      // Pulse animation
-      counterPulseBox.classList.remove('scale-100');
-      counterPulseBox.classList.add('scale-110', 'text-accent');
-      setTimeout(() => {
-        counterPulseBox.classList.remove('scale-110', 'text-accent');
-        counterPulseBox.classList.add('scale-100');
-      }, 200);
-    }
-
-    // Mathematical calculations for pose tracking (Joint angles)
-    function calculateAngle3D(p1, p2, p3) {
-      if (!p1 || !p2 || !p3) return 180;
-      
-      // 2D/3D Vector components
-      const v1 = { x: p1.x - p2.x, y: p1.y - p2.y, z: p1.z - p2.z };
-      const v2 = { x: p3.x - p2.x, y: p3.y - p2.y, z: p3.z - p2.z };
-      
-      const dotProduct = v1.x * v2.x + v1.y * v2.y + v1.z * v2.z;
-      const magV1 = Math.sqrt(v1.x * v1.x + v1.y * v1.y + v1.z * v1.z);
-      const magV2 = Math.sqrt(v2.x * v2.x + v2.y * v2.y + v2.z * v2.z);
-      
-      if (magV1 * magV2 === 0) return 0;
-      
-      const cosAngle = dotProduct / (magV1 * magV2);
-      // Clamp to secure boundary conditions
-      const clampedCos = Math.max(-1, Math.min(1, cosAngle));
-      const radians = Math.acos(clampedCos);
-      return (radians * 180.0) / Math.PI;
-    }
-
-    // Core AI Pose Detector Initialization
-    const pose = new Pose({
-      locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`
-    });
-
-    pose.setOptions({
-      modelComplexity: 1,
-      smoothLandmarks: true,
-      enableSegmentation: false,
-      smoothSegmentation: false,
-      minDetectionConfidence: 0.6,
-      minTrackingConfidence: 0.6
-    });
-
-    // Callback on output predictions
-    pose.onResults(onPoseResults);
-
-    let stream = null;
-    async function startCameraAndModel() {
-      onboardingScreen.classList.add('opacity-0');
-      setTimeout(() => onboardingScreen.classList.add('hidden'), 300);
-      modelLoadingSpinner.classList.remove('hidden');
-
-      statusText.innerText = "Starting Camera...";
-      statusDot.className = "w-2.5 h-2.5 rounded-full bg-yellow-500 animate-pulse";
-
-      try {
-        stream = await navigator.mediaDevices.getUserMedia({
-          video: {
-            facingMode: 'user',
-            width: { ideal: 640 },
-            height: { ideal: 480 }
-          },
-          audio: false
-        });
-        
-        videoElement.srcObject = stream;
-        videoElement.play();
-        
-        statusText.innerText = "Loading AI Vision...";
-        // Trigger initialization payload call to verify model activation
-        await pose.initialize();
-        modelLoadingSpinner.classList.add('hidden');
-        
-        statusText.innerText = "System Tracking Ready";
-        statusDot.className = "w-2.5 h-2.5 rounded-full bg-accent live-pulse";
-
-        // Enable toggle triggers
-        btnToggleWorkout.disabled = false;
-        btnToggleWorkout.className = "flex-grow sm:flex-none px-6 py-3 bg-accent hover:bg-emerald-400 text-darkbg font-bold rounded-xl shadow-lg shadow-accent/20 transition-all transform hover:scale-[1.03] flex items-center justify-center space-x-2";
-
-        // Initialize frame delivery pump
-        requestAnimationFrame(processVideoFrame);
-        speak("Vision model ready. Select your exercise and click start.");
-      } catch (err) {
-        modelLoadingSpinner.classList.add('hidden');
-        onboardingScreen.classList.remove('hidden');
-        onboardingScreen.classList.remove('opacity-0');
-        statusText.innerText = "Access Blocked";
-        statusDot.className = "w-2.5 h-2.5 rounded-full bg-rose-500";
-        showAlert("Camera Unvailable", "Failed to retrieve local webcam device. Ensure you have granted hardware access permissions inside your mobile/desktop browser settings.");
-      }
-    }
-
-    async function processVideoFrame() {
-      if (videoElement.paused || videoElement.ended) {
-        requestAnimationFrame(processVideoFrame);
-        return;
-      }
-      try {
-        await pose.send({ image: videoElement });
-      } catch (e) {
-        console.error("Frame dispatch fault detected: ", e);
-      }
-      requestAnimationFrame(processVideoFrame);
-    }
-
-    // Toggle workout sessions
-    btnToggleWorkout.addEventListener('click', () => {
-      if (!exerciseActive) {
-        // Start Workout
-        exerciseActive = true;
-        resetLocalCounter();
-        startTimer();
-        btnToggleWorkout.innerHTML = `
-          <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM7 8a1 1 0 012 0v4a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v4a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"></path></svg>
-          <span>Pause Workout</span>
-        `;
-        btnToggleWorkout.className = "flex-grow sm:flex-none px-6 py-3 bg-yellow-500 hover:bg-yellow-400 text-slate-950 font-bold rounded-xl transition-all transform hover:scale-[1.03] flex items-center justify-center space-x-2";
-        activeBadge.classList.remove('hidden');
-        speak(`Starting workout session. Keep perfect posture!`);
-      } else {
-        // Pause/End Workout
-        exerciseActive = false;
-        stopTimer();
-        btnToggleWorkout.innerHTML = `
-          <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"></path></svg>
-          <span>Resume Workout</span>
-        `;
-        btnToggleWorkout.className = "flex-grow sm:flex-none px-6 py-3 bg-accent hover:bg-emerald-400 text-darkbg font-bold rounded-xl shadow-lg shadow-accent/20 transition-all transform hover:scale-[1.03] flex items-center justify-center space-x-2";
-        activeBadge.classList.add('hidden');
-        
-        archiveWorkoutSession();
-        speak(`Session paused. Progress archived successfully.`);
-      }
-    });
-
-    btnResetSession.addEventListener('click', () => {
-      resetLocalCounter();
-      speak("Session counter reset.");
-    });
-
-    btnStartCamera.addEventListener('click', () => {
-      startCameraAndModel();
-    });
-
-    // Tracking algorithm pipeline for each frame
-    function onPoseResults(results) {
-      // Clear canvas
-      canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
-      
-      // Auto-resize canvas buffer backings matching container dimensions
-      if (canvasElement.width !== canvasElement.clientWidth || canvasElement.height !== canvasElement.clientHeight) {
-        canvasElement.width = canvasElement.clientWidth;
-        canvasElement.height = canvasElement.clientHeight;
-      }
-
-      // Draw background camera image
-      canvasCtx.drawImage(results.image, 0, 0, canvasElement.width, canvasElement.height);
-
-      if (!results.poseLandmarks) {
-        rawPositionText.innerText = "SKELETON OUT OF FRAME";
-        rawPositionText.className = "text-rose-400 font-bold tracking-wider";
-        aiBanner.classList.add('opacity-0');
-        return;
-      }
-
-      // Draw standard pose map connections using landmarks
-      drawConnectors(canvasCtx, results.poseLandmarks, POSE_CONNECTIONS, { color: '#475569', lineWidth: 2 });
-      drawLandmarks(canvasCtx, results.poseLandmarks, { color: '#10B981', lineWidth: 1, radius: 3 });
-
-      // Run exercise evaluation heuristics if tracking is officially started
-      if (exerciseActive) {
-        evaluateExerciseHeuristics(results.poseLandmarks);
-      } else {
-        rawPositionText.innerText = "READY. TAP START.";
-        rawPositionText.className = "text-accent font-bold tracking-wider";
-      }
-    }
-
-    // MAIN EXERCISE ANALYSIS STATE MACHINE
-    function evaluateExerciseHeuristics(landmarks) {
-      // Coordinate shortcuts (Referencing index values for key joints)
-      const nose = landmarks[0];
-      const leftShoulder = landmarks[11];
-      const rightShoulder = landmarks[12];
-      const leftElbow = landmarks[13];
-      const rightElbow = landmarks[14];
-      const leftWrist = landmarks[15];
-      const rightWrist = landmarks[16];
-      const leftHip = landmarks[23];
-      const rightHip = landmarks[24];
-      const leftKnee = landmarks[25];
-      const rightKnee = landmarks[26];
-      const leftAnkle = landmarks[27];
-      const rightAnkle = landmarks[28];
-
-      // Step out banner notification if visibility thresholds drop below 0.5
-      const criticalJoints = [leftShoulder, rightShoulder, leftHip, rightHip];
-      const visibilityOK = criticalJoints.every(joint => joint && joint.visibility > 0.5);
-
-      if (!visibilityOK) {
-        rawPositionText.innerText = "STEP BACK - ARMS/HIPS OBSCURED";
-        rawPositionText.className = "text-amber-500 font-bold tracking-wider";
-        showAIBanner("Positioning Issue: Adjust camera so your full body is visible", "--", true);
-        return;
-      }
-
-      // Select dominant visible side for computing angles dynamically
-      const side = (leftShoulder.visibility + leftElbow.visibility + leftWrist.visibility) > 
-                   (rightShoulder.visibility + rightElbow.visibility + rightWrist.visibility) ? 'left' : 'right';
-
-      if (activeExercise === 'push-up') {
-        processPushUpLogic(landmarks, side, nose, leftShoulder, rightShoulder, leftElbow, rightElbow, leftWrist, rightWrist, leftHip, rightHip, leftKnee, rightKnee);
-      } else if (activeExercise === 'squat') {
-        processSquatLogic(landmarks, side, leftHip, rightHip, leftKnee, rightKnee, leftAnkle, rightAnkle, leftShoulder, rightShoulder);
-      } else if (activeExercise === 'pull-up') {
-        processPullUpLogic(landmarks, nose, leftShoulder, rightShoulder, leftWrist, rightWrist, leftElbow, rightElbow);
-      } else if (activeExercise === 'sit-up') {
-        processSitUpLogic(landmarks, side, leftShoulder, rightShoulder, leftHip, rightHip, leftKnee, rightKnee);
-      }
-    }
-
-    /* -------------------------------------------------------------
-       EVALUATION LOGIC MODULES (WITH BOOTSTRAP CALIBRATIONS)
-    ------------------------------------------------------------- */
-
-    function processPushUpLogic(landmarks, side, nose, lShoulder, rShoulder, lElbow, rElbow, lWrist, rWrist, lHip, rHip, lKnee, rKnee) {
-      // Elbow calculations
-      const elbowAngle = (side === 'left') 
-        ? calculateAngle3D(lShoulder, lElbow, lWrist)
-        : calculateAngle3D(rShoulder, rElbow, rWrist);
-
-      // Back posture accuracy (Shoulders-Hips-Knees should remain straight around 180 degrees)
-      const hipStraightAngle = (side === 'left')
-        ? calculateAngle3D(lShoulder, lHip, lKnee)
-        : calculateAngle3D(rShoulder, rHip, rKnee);
-
-      // AUTOMATIC STATE MACHINE CALIBRATION
-      if (exerciseState === 'out') {
-        if (elbowAngle > 150) {
-          exerciseState = 'up';
-        } else if (elbowAngle < 90) {
-          exerciseState = 'down';
-        }
-      }
-
-      // Map progress state
-      // Depth target: < 90 deg is full down, Stand extension target: > 150 deg is up
-      let progressPct = 0;
-      if (elbowAngle > 150) progressPct = 0;
-      else if (elbowAngle < 90) progressPct = 100;
-      else {
-        progressPct = Math.round(((150 - elbowAngle) / 60) * 100);
-      }
-      updateStateGauge(progressPct);
-
-      // Evaluate Back Alignment (Posture Integrity Score)
-      // Deviation from straight alignment penalizes the rep
-      const accuracyDiff = Math.abs(180 - hipStraightAngle);
-      let repAccuracy = 100 - (accuracyDiff * 1.8);
-      repAccuracy = Math.max(10, Math.min(100, Math.round(repAccuracy)));
-
-      // Render Dynamic Action Guidelines
-      const stateInstruction = exerciseState === 'up' ? 'GO DOWN' : (exerciseState === 'down' ? 'PUSH UP!' : 'GET IN POSITION');
-      rawPositionText.innerText = `ELBOW ANGLE: ${Math.round(elbowAngle)}° (${stateInstruction})`;
-      rawPositionText.className = "text-emerald-400 font-mono tracking-wider";
-
-      if (elbowAngle < 90) {
-        if (exerciseState === 'up') {
-          exerciseState = 'down';
-          showAIBanner("Deep position held! Now push up.", `${Math.round(elbowAngle)}°`);
-        }
-      } else if (elbowAngle > 155) {
-        if (exerciseState === 'down') {
-          // Rep completed successfully
-          exerciseState = 'up';
-          registerRepCompleted(repAccuracy);
-          showAIBanner("Rep complete!", `${Math.round(elbowAngle)}°`);
-        }
-      }
-
-      // Live Form feedback overlay checks
-      if (hipStraightAngle < 155) {
-        showAIBanner("Form Warning: Keep hips up and body straight!", `${Math.round(hipStraightAngle)}°`, true);
-      } else {
-        showAIBanner("Excellent posture alignment", `${Math.round(elbowAngle)}°`);
-      }
-    }
-
-    function processSquatLogic(landmarks, side, lHip, rHip, lKnee, rKnee, lAnkle, rAnkle, lShoulder, rShoulder) {
-      // Knee Calculations
-      const kneeAngle = (side === 'left')
-        ? calculateAngle3D(lHip, lKnee, lAnkle)
-        : calculateAngle3D(rHip, rKnee, rAnkle);
-
-      // Form Accuracy parameter: Torso inclination angle vs absolute vertical line
-      // Keeping torso relatively upright prevents back injury. Calculate alignment of shoulder -> hip -> knee.
-      const hipStraightAngle = (side === 'left')
-        ? calculateAngle3D(lShoulder, lHip, lKnee)
-        : calculateAngle3D(rShoulder, rHip, rKnee);
-
-      // AUTOMATIC STATE MACHINE CALIBRATION
-      if (exerciseState === 'out') {
-        if (kneeAngle > 150) {
-          exerciseState = 'up';
-        } else if (kneeAngle < 95) {
-          exerciseState = 'down';
-        }
-      }
-
-      // Gauge progress (Up = > 160 deg, Down squat depth = < 95 deg)
-      let progressPct = 0;
-      if (kneeAngle > 160) progressPct = 0;
-      else if (kneeAngle < 95) progressPct = 100;
-      else {
-        progressPct = Math.round(((160 - kneeAngle) / 65) * 100);
-      }
-      updateStateGauge(progressPct);
-
-      // Score Form Accuracy
-      // Hip angle should not be extremely compressed forward (Ideally > 75 degrees in squat)
-      let squatFormScore = 100;
-      if (hipStraightAngle < 80) {
-        squatFormScore = Math.max(20, Math.round(100 - (80 - hipStraightAngle) * 2));
-      }
-
-      // Render Dynamic Action Guidelines
-      const stateInstruction = exerciseState === 'up' ? 'SQUAT DOWN' : (exerciseState === 'down' ? 'STAND UP!' : 'GET IN POSITION');
-      rawPositionText.innerText = `KNEE ANGLE: ${Math.round(kneeAngle)}° (${stateInstruction})`;
-      rawPositionText.className = "text-emerald-400 font-mono tracking-wider";
-
-      if (kneeAngle < 95) {
-        if (exerciseState === 'up') {
-          exerciseState = 'down';
-          showAIBanner("Full squat depth reached! Hold & rise.", `${Math.round(kneeAngle)}°`);
-        }
-      } else if (kneeAngle > 160) {
-        if (exerciseState === 'down') {
-          exerciseState = 'up';
-          registerRepCompleted(squatFormScore);
-          showAIBanner("Rep complete!", `${Math.round(kneeAngle)}°`);
-        }
-      }
-
-      if (hipStraightAngle < 80) {
-        showAIBanner("Form Warning: Don't lean too far forward!", `${Math.round(kneeAngle)}°`, true);
-      } else {
-        showAIBanner("Squat stance looks correct", `${Math.round(kneeAngle)}°`);
-      }
-    }
-
-    function processPullUpLogic(landmarks, nose, lShoulder, rShoulder, lWrist, rWrist, lElbow, rElbow) {
-      // Calculate average shoulder height y coordinates (lower value in 2D is higher up on screen)
-      const shouldersY = (lShoulder.y + rShoulder.y) / 2;
-      const noseY = nose.y;
-      
-      // Since bars are invisible, we assume hands/wrists are at the highest points.
-      // Chin must rise above the line of the wrists or shoulders relative to original baseline
-      const wristLevelY = (lWrist.y + rWrist.y) / 2;
-      
-      // Determine distance between wrists and shoulders
-      const pullRange = shouldersY - wristLevelY;
-      
-      // Standardize tracking percentage of current execution
-      // Down stance: noseY > shouldersY - 0.1 * range. Up stance: noseY < wristLevelY
-      let progressPct = 0;
-      const totalSpan = shouldersY - wristLevelY;
-      if (totalSpan > 0) {
-        const relativePosition = shouldersY - noseY;
-        progressPct = Math.max(0, Math.min(100, Math.round((relativePosition / totalSpan) * 100)));
-      }
-
-      // AUTOMATIC STATE MACHINE CALIBRATION
-      if (exerciseState === 'out') {
-        if (progressPct >= 90) {
-          exerciseState = 'up';
-        } else if (progressPct <= 25) {
-          exerciseState = 'down';
-        }
-      }
-
-      updateStateGauge(progressPct);
-
-      // Calculate form accuracy using arm symmetry (left vs right elbow symmetry)
-      const leftElbowAngle = calculateAngle3D(lShoulder, lElbow, lWrist);
-      const rightElbowAngle = calculateAngle3D(rShoulder, rElbow, rWrist);
-      const symmetryDelta = Math.abs(leftElbowAngle - rightElbowAngle);
-      
-      let accuracyScore = Math.max(40, Math.round(100 - (symmetryDelta * 1.5)));
-
-      // Render Dynamic Action Guidelines
-      const stateInstruction = exerciseState === 'down' ? 'PULL UP!' : (exerciseState === 'up' ? 'LOWER DOWN' : 'GET IN POSITION');
-      rawPositionText.innerText = `PULL HEIGHT RATIO: ${progressPct}% (${stateInstruction})`;
-      rawPositionText.className = "text-emerald-400 font-mono tracking-wider";
-
-      if (progressPct >= 95) {
-        if (exerciseState === 'down') {
-          exerciseState = 'up';
-          showAIBanner("Chin above bar! Descend slowly.", `${progressPct}%`);
-        }
-      } else if (progressPct <= 20) {
-        if (exerciseState === 'up') {
-          exerciseState = 'down';
-          registerRepCompleted(accuracyScore);
-          showAIBanner("Rep complete!", `${progressPct}%`);
-        }
-      }
-
-      if (symmetryDelta > 25) {
-        showAIBanner("Warning: Pulling unevenly! Balance your arms.", `${Math.round(symmetryDelta)}° diff`, true);
-      } else {
-        showAIBanner("Good symmetrical pull form", `${progressPct}%`);
-      }
-    }
-
-    function processSitUpLogic(landmarks, side, lShoulder, rShoulder, lHip, rHip, lKnee, rKnee) {
-      // Hip flexor calculations (Evaluating angle of shoulder -> hip -> knee)
-      const hipAngle = (side === 'left')
-        ? calculateAngle3D(lShoulder, lHip, lKnee)
-        : calculateAngle3D(rShoulder, rHip, rKnee);
-
-      // AUTOMATIC STATE MACHINE CALIBRATION
-      if (exerciseState === 'out') {
-        if (hipAngle < 75) {
-          exerciseState = 'up';
-        } else if (hipAngle > 125) {
-          exerciseState = 'down';
-        }
-      }
-
-      // Upright angle: < 70 deg. Lying angle: > 130 deg.
-      let progressPct = 0;
-      if (hipAngle > 135) progressPct = 0;
-      else if (hipAngle < 65) progressPct = 100;
-      else {
-        progressPct = Math.round(((135 - hipAngle) / 70) * 100);
-      }
-      updateStateGauge(progressPct);
-
-      // Form score calculation: Smooth velocity and knee control (knees shouldn't split open or flex too wide)
-      const kneeFlexAngle = (side === 'left')
-        ? calculateAngle3D(lHip, lKnee, landmarks[27])
-        : calculateAngle3D(rHip, rKnee, landmarks[28]);
-
-      // Knees should remain stabilized at approx 80-100 deg throughout
-      let kneeDev = Math.abs(90 - kneeFlexAngle);
-      let accuracyScore = Math.max(30, Math.round(100 - (kneeDev * 1.2)));
-
-      // Render Dynamic Action Guidelines
-      const stateInstruction = exerciseState === 'down' ? 'SIT UP!' : (exerciseState === 'up' ? 'LIE DOWN' : 'GET IN POSITION');
-      rawPositionText.innerText = `HIP ANGLE: ${Math.round(hipAngle)}° (${stateInstruction})`;
-      rawPositionText.className = "text-emerald-400 font-mono tracking-wider";
-
-      if (hipAngle < 65) {
-        if (exerciseState === 'down') {
-          exerciseState = 'up';
-          showAIBanner("Ab Crunch Point! Lower down torso.", `${Math.round(hipAngle)}°`);
-        }
-      } else if (hipAngle > 130) {
-        if (exerciseState === 'up') {
-          exerciseState = 'down';
-          registerRepCompleted(accuracyScore);
-          showAIBanner("Rep complete!", `${Math.round(hipAngle)}°`);
-        }
-      }
-
-      if (kneeFlexAngle < 60 || kneeFlexAngle > 120) {
-        showAIBanner("Form Warning: Stabilize your bent knees!", `${Math.round(kneeFlexAngle)}°`, true);
-      } else {
-        showAIBanner("Abdominal muscle targeting active", `${Math.round(hipAngle)}°`);
-      }
-    }
-
-    // Update real-time exercise progress bar element
-    function updateStateGauge(percentage) {
-      exerciseStateGauge.style.width = `${Math.min(100, Math.max(0, percentage))}%`;
-    }
-
-    // Dynamic banner overlay details
-    function showAIBanner(message, data, isWarning = false) {
-      aiBanner.classList.remove('opacity-0', '-translate-y-2');
-      aiBannerText.innerText = message;
-      aiBannerAngle.innerText = data;
-      
-      if (isWarning) {
-        aiBanner.className = "absolute top-4 left-4 right-4 bg-red-950/95 border border-red-500/50 px-4 py-2.5 rounded-2xl flex items-center justify-between text-xs backdrop-blur shadow-lg shadow-red-950/40 text-red-200 transition-all duration-300";
-        aiBannerAngle.className = "font-mono text-red-400 font-bold";
-      } else {
-        aiBanner.className = "absolute top-4 left-4 right-4 bg-slate-900/90 border border-slate-700/80 px-4 py-2.5 rounded-2xl flex items-center justify-between text-xs backdrop-blur text-slate-200 transition-all duration-300";
-        aiBannerAngle.className = "font-mono text-accent font-bold";
-      }
-    }
-
-    // Repetition counter incrementer
-    function registerRepCompleted(accuracy) {
-      repsCount++;
-      updateCounterUI();
-      triggerRepAudioChime();
-
-      // Store accuracy details for averaging
-      accuracyMeasurementsCount++;
-      totalFormAccuracy = ((totalFormAccuracy * (accuracyMeasurementsCount - 1)) + accuracy) / accuracyMeasurementsCount;
-      const printedAccuracy = Math.round(totalFormAccuracy);
-      accuracyDisplay.innerText = `${printedAccuracy}%`;
-
-      // Speak current state metrics
-      if (repsCount % 5 === 0) {
-        speak(`${repsCount} reps completed. Form accuracy is ${printedAccuracy} percent.`);
-      } else {
-        speak(`${repsCount}`);
-      }
-
-      // Compute dynamic calories based on standard physical constants
-      // Pushup: ~0.4 kcal, Squat: ~0.5 kcal, Pullup: ~1 kcal, Situp: ~0.3 kcal
-      const caloriesPerRep = {
-        'push-up': 0.42,
-        'squat': 0.55,
-        'pull-up': 1.10,
-        'sit-up': 0.35
-      };
-
-      computedCalories += (caloriesPerRep[activeExercise] || 0.4);
-      caloriesDisplay.innerHTML = `${computedCalories.toFixed(1)} <span class="text-[10px] text-slate-400">kcal</span>`;
-    }
-
-    /* -------------------------------------------------------------
-       DATABASE / WORKOUT ARCHIVAL STORAGE CONTROLLER
-    ------------------------------------------------------------- */
-    function archiveWorkoutSession() {
-      if (repsCount === 0) return; // Ignore null sessions
-
-      const workoutItem = {
-        id: 'workout_' + Date.now(),
-        date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }),
-        exercise: formatExerciseLabel(activeExercise),
-        reps: repsCount,
-        duration: formatSecondsToTime(secondsElapsed),
-        calories: computedCalories.toFixed(1),
-        accuracy: Math.round(totalFormAccuracy)
-      };
-
-      let history = getWorkoutHistory();
-      // Prepend to display latest records first
-      history.unshift(workoutItem);
-      localStorage.setItem(WORKOUT_LOG_KEY, JSON.stringify(history));
-      renderHistoryList();
-    }
-
-    function getWorkoutHistory() {
-      const stored = localStorage.getItem(WORKOUT_LOG_KEY);
-      return stored ? JSON.parse(stored) : [];
-    }
-
-    function formatExerciseLabel(type) {
-      const map = {
-        'push-up': 'Push-ups',
-        'squat': 'Squats',
-        'pull-up': 'Pull-ups',
-        'sit-up': 'Sit-ups'
-      };
-      return map[type] || type;
-    }
-
-    function formatSecondsToTime(totalSecs) {
-      const mins = Math.floor(totalSecs / 60);
-      const secs = totalSecs % 60;
-      return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-    }
-
-    function renderHistoryList() {
-      const historyListContainer = document.getElementById('historyListContainer');
-      const emptyState = document.getElementById('historyEmptyState');
-      const history = getWorkoutHistory();
-
-      if (history.length === 0) {
-        emptyState.classList.remove('hidden');
-        // Delete remaining elements
-        const items = historyListContainer.querySelectorAll('.history-card');
-        items.forEach(el => el.remove());
-        return;
-      }
-
-      emptyState.classList.add('hidden');
-      
-      // Clean previous items
-      const existingCards = historyListContainer.querySelectorAll('.history-card');
-      existingCards.forEach(el => el.remove());
-
-      history.forEach(item => {
-        const card = document.createElement('div');
-        card.className = "history-card bg-slate-900 border border-slate-800 p-3.5 rounded-2xl flex items-center justify-between transition-all hover:border-slate-700/60";
-        card.innerHTML = `
-          <div class="flex items-center space-x-3">
-            <div class="bg-slate-800 text-slate-300 w-10 h-10 rounded-xl flex flex-col items-center justify-center">
-              <span class="text-xs font-bold font-mono text-accent">${item.reps}</span>
-              <span class="text-[7px] uppercase tracking-wider text-slate-500 font-bold">Reps</span>
-            </div>
-            <div>
-              <h5 class="text-xs font-bold text-white">${item.exercise}</h5>
-              <p class="text-[10px] text-slate-400 mt-0.5">${item.date}</p>
-            </div>
-          </div>
-          
-          <div class="flex items-center space-x-6 text-right">
-            <div>
-              <span class="block text-xs font-bold text-slate-200">${item.duration}</span>
-              <span class="text-[9px] uppercase tracking-wider text-slate-500 block">Duration</span>
-            </div>
-            <div>
-              <span class="block text-xs font-bold text-amber-500">${item.calories} <span class="text-[8px] text-slate-400">kcal</span></span>
-              <span class="text-[9px] uppercase tracking-wider text-slate-500 block">Energy</span>
-            </div>
-            <div class="bg-accentSoft px-2.5 py-1 rounded-xl border border-accent/10">
-              <span class="block text-xs font-bold text-accent font-mono text-center">${item.accuracy}%</span>
-              <span class="text-[8px] uppercase tracking-wider text-slate-400 block text-center">Form</span>
-            </div>
-          </div>
-        `;
-        historyListContainer.appendChild(card);
-      });
-    }
-
-    btnClearHistory.addEventListener('click', () => {
-      localStorage.removeItem(WORKOUT_LOG_KEY);
-      renderHistoryList();
-      speak("Workout history log cleared successfully.");
-    });
-
-    // Populate log entries on runtime
-    window.onload = function() {
-      renderHistoryList();
-    };
 
   </script>
 </body>
